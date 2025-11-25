@@ -1,0 +1,15 @@
+# CRITICAL: Do not copy host modules into Linux container
+node_modules
+
+# Ignore Next.js build files
+.next
+out
+build
+
+# Ignore git
+.git
+.gitignore
+
+# Ignore Docker stuff
+Dockerfile
+docker-compose.yml

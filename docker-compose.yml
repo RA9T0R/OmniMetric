@@ -1,0 +1,35 @@
+services:
+  # 1. The AI Backend (FastAPI + Python)
+  backend:
+    build: ./backend
+    container_name: future_backend
+    # Important: reload allows you to change code without restarting docker
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    environment:
+      # FIX FOR BACKEND: Forces uvicorn to check for file changes constantly
+      - WATCHFILES_FORCE_POLLING=true
+    # Removed 'depends_on: db'
+    # Removed 'environment: DATABASE_URL'
+
+  # 2. The Frontend (Next.js)
+  frontend:
+    build: ./frontend
+    container_name: future_frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # Prevents host node_modules from overwriting container
+    depends_on:
+      - backend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      # FIX FOR FRONTEND: Forces Next.js (Webpack) to check for file changes
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+
+# Removed 'volumes: postgres_data' because no DB is using it
