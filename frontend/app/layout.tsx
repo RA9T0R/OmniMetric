@@ -29,7 +29,11 @@ export default function RootLayout({
         className={`${SpaceGrotesk.variable} ${geistMono.variable} min-h-screen antialiased`}
       >
         <ThemeProvider attribute="class" enableSystem defaultTheme="system">
-            {children}
+          <div className="min-h-screen bg-BG_dark dark:bg-Dark_BG_dark">
+            <main>
+              {children}
+            </main>
+          </div>
         </ThemeProvider>
       </body>
     </html>

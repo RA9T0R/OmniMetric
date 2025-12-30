@@ -12,6 +12,9 @@ const nextConfig: NextConfig = {
         ignoreBuildErrors: true,
     },
     reactCompiler: true,
+    experimental: {
+        turbopackFileSystemCacheForDev: true,
+    },
 };
 
 export default nextConfig;
