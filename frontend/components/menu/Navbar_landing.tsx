@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useState } from 'react';
 import { Menu } from "lucide-react";
 import Image from "next/image";
@@ -17,12 +19,13 @@ const Navbar_landing = ({ onMenuClick, onLoginClick, onSignupClick }: NavbarProp
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMounted(true);
     }, []);
 
     return (
 
-        <nav className="fixed top-0 w-full z-25 px-5 md:px-8 lg:px-0 bg-BG_dark dark:bg-Dark_BG_dark backdrop-blur-md border-b border-BG_light dark:border-Dark_BG_light">
+        <nav className="navbar-landing-fixed">
 
             {/* Container handles the width and vertical borders */}
             <Container className="flex justify-between items-center h-20">
@@ -34,7 +37,7 @@ const Navbar_landing = ({ onMenuClick, onLoginClick, onSignupClick }: NavbarProp
                     </button>
 
                     <Link href="/" className="flex items-center gap-2">
-                        <div className="flex w-8 h-8 md:w-10 md:h-10 items-center justify-center flex-shrink-0 select-none">
+                        <div className="flex w-8 h-8 md:w-10 md:h-10 items-center justify-center shrink-0 select-none">
                             {mounted && (theme === "dark"
                                 ? <Image src="/images/OmniMetricW.png" alt="Logo" width={30} height={30} />
                                 : <Image src="/images/OmniMetricB.png" alt="Logo" width={30} height={30} />
@@ -47,10 +50,10 @@ const Navbar_landing = ({ onMenuClick, onLoginClick, onSignupClick }: NavbarProp
 
                 {/* 2. Center Section: Navigation Links */}
                 <div className="hidden md:flex items-center gap-8">
-                    <Link href="#features" className="text-sm font-medium text-Text dark:text-Dark_Text hover:text-power dark:hover:text-Dark_power transition-colors">
+                    <Link href="#features" className="navbar-landing-link">
                         Key Features
                     </Link>
-                    <Link href="#how-it-works" className="text-sm font-medium text-Text dark:text-Dark_Text hover:text-power dark:hover:text-Dark_power transition-colors">
+                    <Link href="#how-it-works" className="navbar-landing-link">
                         How It Works
                     </Link>
                 </div>
@@ -68,7 +71,7 @@ const Navbar_landing = ({ onMenuClick, onLoginClick, onSignupClick }: NavbarProp
 
                     <button
                         onClick={onSignupClick}
-                        className="cursor-pointer bg-power dark:bg-Dark_power hover:scale-105 text-black font-semibold text-sm px-5 py-2.5 rounded-lg transition-colors"
+                        className="btn-primary-action"
                     >
                         Sign In
                     </button>

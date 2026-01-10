@@ -24,8 +24,8 @@ const ThemeToggle = () => {
     return (
         <button onClick={() => setTheme(theme === "light" ? "dark" : "light")} className="shadow-xs shadow-text dark:shadow-Dark_text rounded-full cursor-pointer size-8 md:size-11 flex items-center justify-center">
             {theme === "dark"
-              ? <Sun strokeWidth={1} className="size-5 md:size-8"/>
-              : <Moon strokeWidth={1} className="size-5 md:size-8"/>}
+              ? <Sun strokeWidth={2} className="size-5 md:size-8"/>
+              : <Moon strokeWidth={2} className="size-5 md:size-8"/>}
         </button>
     )
 }

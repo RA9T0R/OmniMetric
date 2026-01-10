@@ -4,6 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+
     /* ------------------------------------------------------------------- */
     /* LIGHT MODE VARIABLES (Cool & Crisp) */
     /* ------------------------------------------------------------------- */
@@ -42,5 +43,99 @@
   /* Create your custom variable class here */
   .input-primary {
     @apply w-full bg-BG_dark dark:bg-Dark_BG_dark border border-white/10 rounded-lg px-4 py-3 text-sm text-Text dark:text-Dark_Text placeholder:text-subtext dark:placeholder:text-Dark_subtext focus:outline-none focus:ring-2 focus:ring-power dark:focus:ring-Dark_power;
+  }
+  /* ------------------------------------------------ */
+  /* MOBILE MENU SHARED CLASSES                       */
+  /* ------------------------------------------------ */
+
+  .mobile-menu-wrapper {
+    @apply fixed inset-0 z-50 transition-opacity duration-300 ease-in-out md:hidden;
+  }
+
+  .mobile-menu-panel {
+    @apply absolute top-0 left-0 h-full w-72 shrink-0 flex flex-col transition-transform duration-300 ease-in-out bg-Main_BG dark:bg-Dark_Main_BG text-Text dark:text-Dark_Text;
+  }
+
+  /* ------------------------------------------------ */
+  /* SPECIFIC LINK STYLES                             */
+  /* ------------------------------------------------ */
+
+  /* REMOVED 'group' from here */
+  .mobile-link-board {
+    @apply flex items-center gap-4 px-3 py-3 rounded-xl transition-all duration-200 font-medium text-Text dark:text-Dark_Text;
+  }
+
+  .mobile-link-landing {
+    @apply flex items-center gap-3 px-3 py-2 rounded-xl transition-colors font-medium text-Text dark:text-Dark_Text hover:bg-black/5 dark:hover:bg-white/5;
+  }
+
+  /* ------------------------------------------------ */
+  /* NAVBAR BOARD (Dashboard) CLASSES                 */
+  /* ------------------------------------------------ */
+
+  .navbar-board-header {
+    @apply mb-2 flex items-center justify-between shrink-0 z-20;
+  }
+
+  /* Define the base style for use in HTML directly */
+  .navbar-btn-base {
+    @apply bg-Main_BG dark:bg-Dark_Main_BG border-2 border-BG_light dark:border-Dark_BG_light rounded-lg transition-colors;
+  }
+
+  /* FIX: Explicitly list styles here. Do NOT use @apply navbar-btn-base */
+  .navbar-user-trigger {
+    @apply cursor-pointer flex items-center gap-3 px-2 py-1.5 bg-Main_BG dark:bg-Dark_Main_BG border-2 border-BG_light dark:border-Dark_BG_light rounded-lg transition-colors;
+  }
+
+  .navbar-dropdown-card {
+    @apply absolute left-0 top-full mt-2 w-[300px] bg-Main_BG dark:bg-Dark_Main_BG border border-BG_light dark:border-Dark_BG_light rounded-xl shadow-2xl z-50 p-5 animate-in fade-in slide-in-from-top-2;
+  }
+
+  .navbar-dropdown-item {
+    @apply cursor-pointer flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-BG_light dark:border-Dark_BG_light text-Text dark:text-Dark_Text hover:bg-white/5 transition-colors text-sm font-medium;
+  }
+
+  /* ------------------------------------------------ */
+  /* NAVBAR LANDING CLASSES                           */
+  /* ------------------------------------------------ */
+
+  .navbar-landing-fixed {
+    @apply fixed top-0 w-full z-20 px-5 md:px-8 lg:px-0 bg-BG_dark dark:bg-Dark_BG_dark backdrop-blur-md border-b border-BG_light dark:border-Dark_BG_light;
+  }
+
+  .navbar-landing-link {
+    @apply text-sm font-medium text-Text dark:text-Dark_Text hover:text-power dark:hover:text-Dark_power transition-colors;
+  }
+
+  .btn-primary-action {
+    @apply cursor-pointer bg-power dark:bg-Dark_power hover:scale-105 text-black font-semibold text-sm px-5 py-2.5 rounded-lg transition-colors;
+  }
+
+  /* ------------------------------------------------ */
+  /* DASHBOARD PAGE CLASSES                           */
+  /* ------------------------------------------------ */
+
+  /* Top Row: Total Projects / Total Token Cards */
+  .dashboard-stat-card {
+    @apply flex-col bg-Main_BG dark:bg-Dark_Main_BG border border-BG_light dark:border-Dark_BG_light p-4 rounded-2xl flex justify-between shadow-sm relative overflow-hidden h-40;
+  }
+
+  /* The main background panels */
+  .dashboard-panel-base {
+    @apply bg-Main_BG dark:bg-Dark_Main_BG border border-BG_light dark:border-Dark_BG_light rounded-2xl;
+  }
+
+  /* Recent Projects: REMOVED 'group' from here */
+  .dashboard-project-row {
+    @apply bg-BG_light dark:bg-[#111] border border-black/5 dark:border-white/5 p-3 rounded-xl flex items-center justify-between hover:border-white/10 transition-colors;
+  }
+
+  /* Type Price Groups */
+  .dashboard-price-group-box {
+    @apply bg-BG_light dark:bg-Dark_BG_light rounded-2xl p-5 border border-black/5 dark:border-white/5;
+  }
+
+  .dashboard-price-row {
+    @apply flex items-center justify-between bg-Main_BG dark:bg-Dark_Main_BG p-2 px-4 rounded-xl;
   }
 }
