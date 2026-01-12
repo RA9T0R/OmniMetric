@@ -71,7 +71,7 @@ const Navbar_landing = ({ onMenuClick, onLoginClick, onSignupClick }: NavbarProp
 
                     <button
                         onClick={onSignupClick}
-                        className="btn-primary-action"
+                        className="btn-power-action"
                     >
                         Sign In
                     </button>

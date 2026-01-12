@@ -3,8 +3,9 @@
 import React, { useState } from 'react';
 import PriceCard from '@/components/PriceCard';
 import { PRICING_TIERS } from '@/lib/constants';
+import ProjectsPage from "@/app/(dashboard)/dashboard/projects/page";
 
-export default function PricePage() {
+const PricePage = () => {
     const [selectedId, setSelectedId] = useState<string | null>(null);
 
     const selectedTier = PRICING_TIERS.find(t => t.id === selectedId);
@@ -21,7 +22,7 @@ export default function PricePage() {
         <div className="w-full min-h-full flex flex-col relative">
 
             {/* Scrollable Content Container */}
-            <div className="w-full xl:max-w-9/10 mx-auto pt-4 flex-1">
+            <div className="w-full gap-6 xl:max-w-9/10 mx-auto pb-12 flex-1">
 
                 <div className="mb-8 px-2 md:px-0">
                     <h1 className="text-3xl md:text-4xl font-bold text-Text dark:text-Dark_Text">Buy Token</h1>
@@ -60,3 +61,4 @@ export default function PricePage() {
         </div>
     );
 }
+export default PricePage;

@@ -107,8 +107,12 @@
     @apply text-sm font-medium text-Text dark:text-Dark_Text hover:text-power dark:hover:text-Dark_power transition-colors;
   }
 
-  .btn-primary-action {
+  .btn-power-action {
     @apply cursor-pointer bg-power dark:bg-Dark_power hover:scale-105 text-black font-semibold text-sm px-5 py-2.5 rounded-lg transition-colors;
+  }
+
+  .btn-primary-action {
+    @apply cursor-pointer bg-primary dark:bg-Dark_primary hover:scale-105 text-black font-semibold text-sm px-5 py-2.5 rounded-lg transition-colors;
   }
 
   /* ------------------------------------------------ */

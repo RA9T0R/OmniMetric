@@ -41,7 +41,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
 
                 {/* Only show Logo & Text if NOT collapsed */}
                 {!isCollapsed && (
-                    <Link href="/" className="flex items-center gap-2 overflow-hidden">
+                    <Link href="/dashboard" className="flex items-center gap-2 overflow-hidden">
                         <div className="flex size-10 items-center justify-center shrink-0 select-none">
                             {mounted && (theme === "dark"
                                 ? <Image src="/images/OmniMetricW.png" alt="Logo" width={40} height={40} />

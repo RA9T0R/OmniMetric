@@ -52,39 +52,6 @@ export const sidebar_content: SidebarItem[] = [
 ];
 
 // ==========================================
-// PROJECT DATA
-// ==========================================
-
-export const DUMMY_PROJECTS = [
-    {
-        id: "proj_01",
-        title: "Downtown Traffic Analysis",
-        inputType: "normal",
-        modelName: "yolo_precise",
-        imageCount: 12,
-        updatedAt: "2 mins ago",
-        status: "processing"
-    },
-    {
-        id: "proj_02",
-        title: "Forest Depth Map",
-        inputType: "360_degree",
-        modelName: "yolo_fast",
-        imageCount: 4,
-        updatedAt: "2 days ago",
-        status: "done"
-    },
-    {
-        id: "proj_03",
-        title: "Construction Site A",
-        inputType: "normal",
-        modelName: "yolo_precise",
-        imageCount: 150,
-        updatedAt: "1 week ago",
-        status: "done"
-    }
-];
-// ==========================================
 // USER DATA
 // ==========================================
 export const DUMMY_USER = {
@@ -192,5 +159,120 @@ export const TYPE_PRICES = {
     images: [
         { name: "360 Image", price: "XX Token", icon: "globe" },
         { name: "Normal", price: "XX Token", icon: "image" }
+    ]
+};
+// ==========================================
+// 1. PRICING CONFIG (For Calculator Logic)
+// ==========================================
+export const PRICING_CONFIG = {
+    models: {
+        'ProTypeModel': 10,  // Cost per image
+        'FastTypeModel': 5
+    },
+    inputs: {
+        '360_degree': 5,     // Extra cost per image
+        'normal': 2
+    }
+};
+
+// ==========================================
+// 2. PROJECT LIST DATA
+// ==========================================
+export const DUMMY_PROJECTS = [
+    {
+        projectId: "proj_001",
+        title: "Somewhere",
+        date: "29 February 2024",
+        modelName: "ProTypeModel",
+        inputType: "Normal Image",
+        imageCount: 10,
+        status: "Completed", // Clickable
+        thumbnail: "/images/project_thumb_1.jpg" // We'll use a placeholder color if missing
+    },
+    {
+        projectId: "proj_002",
+        title: "Nowhere",
+        date: "02 October 2024",
+        modelName: "FastTypeModel",
+        inputType: "360 Image",
+        imageCount: 100,
+        status: "Processing", // NOT Clickable (Locked)
+        thumbnail: "/images/project_thumb_2.jpg"
+    },
+    {
+        projectId: "proj_003",
+        title: "Somewhere",
+        date: "29 February 2024",
+        modelName: "FastTypeModel",
+        inputType: "360 Image",
+        imageCount: 100,
+        status: "Failed", // Error State
+        thumbnail: "/images/project_thumb_3.jpg"
+    },
+    {
+        projectId: "proj_004",
+        title: "Somewhere",
+        date: "29 February 2024",
+        modelName: "ProTypeModel",
+        inputType: "Normal Image",
+        imageCount: 10,
+        status: "Completed",
+        thumbnail: "/images/project_thumb_4.jpg"
+    }
+];
+
+// ==========================================
+// 3. PROJECT DETAIL MOCK DATA
+// ==========================================
+
+export const DUMMY_PROJECT_DETAIL = {
+    id: "proj_001",
+    title: "Somewhere Detail",
+    description: "This is your 'somewhere' project detail",
+    modelType: "ProTypeModel",
+    imageType: "Normal Image",
+    images: [
+        {
+            id: "img_01",
+            url: "/images/sample_street.jpg", // You can use a placeholder if you don't have this
+            depthUrl: "/images/sample_street_depth.jpg", // Placeholder for depth map
+            name: "Street_View_01",
+            uploadDate: "2024-02-20",
+            objects: [
+                {
+                    id: "obj_1",
+                    label: "Person 1",
+                    confidence: 99,
+                    distance: 7.38,
+                    // Percentages for responsive positioning: { top, left, width, height }
+                    box: { top: 25, left: 45, width: 10, height: 45 },
+                    color: "green" // green, yellow, red
+                },
+                {
+                    id: "obj_2",
+                    label: "Person 2",
+                    confidence: 85,
+                    distance: 6.04,
+                    box: { top: 35, left: 30, width: 8, height: 30 },
+                    color: "yellow"
+                },
+                {
+                    id: "obj_3",
+                    label: "Person 3",
+                    confidence: 90,
+                    distance: 12.5,
+                    box: { top: 38, left: 60, width: 7, height: 28 },
+                    color: "green"
+                }
+            ]
+        },
+        {
+            id: "img_02",
+            url: "/images/sample_room.jpg",
+            depthUrl: "/images/sample_room_depth.jpg",
+            name: "Room_View_01",
+            uploadDate: "2024-02-21",
+            objects: [] // Empty for now
+        }
     ]
 };

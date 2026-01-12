@@ -3,8 +3,9 @@
 import React from 'react';
 import { User, Mail, Lock } from 'lucide-react';
 import { DUMMY_USER } from "@/lib/constants";
+import ProjectsPage from "@/app/(dashboard)/dashboard/projects/page";
 
-export default function SettingsPage() {
+const SettingsPage = () => {
     return (
         <div className="w-full xl:max-w-9/10 mx-auto pt-4">
 
@@ -117,3 +118,5 @@ export default function SettingsPage() {
         </div>
     );
 }
+
+export default SettingsPage;

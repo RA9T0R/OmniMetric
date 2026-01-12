@@ -24,8 +24,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning={true}>
-      <body
+    <html lang="en" suppressHydrationWarning>
+      <body suppressHydrationWarning={true}
         className={`${SpaceGrotesk.variable} ${geistMono.variable} min-h-screen antialiased`}
       >
         <ThemeProvider attribute="class" enableSystem defaultTheme="system">

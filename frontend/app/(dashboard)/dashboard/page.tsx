@@ -29,7 +29,7 @@ export default function DashboardPage() {
 
             {/* 1. Header Text */}
             <div className="flex flex-col gap-1">
-                <h1 className="text-4xl font-bold text-Text dark:text-Dark_Text">Home Page</h1>
+                <h1 className="text-3xl md:text-4xl font-bold text-Text dark:text-Dark_Text">Home Page</h1>
                 <p className="text-xs font-light text-subtext dark:text-Dark_subtext">All Thing in you omnimetric</p>
             </div>
 
