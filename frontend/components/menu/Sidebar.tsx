@@ -7,6 +7,7 @@ import { sidebar_content, icons } from '@/lib/constants';
 import {ArrowLeftFromLine, ArrowRightFromLine, LogOut} from 'lucide-react';
 import Image from "next/image";
 import {useTheme} from "next-themes";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SidebarProps {
     isCollapsed: boolean;
@@ -17,6 +18,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
     const pathname = usePathname();
     const { theme } = useTheme();
     const [mounted, setMounted] = useState(false);
+    const {logout} = useAuth();
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -105,13 +107,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
             {/* 3. LOGOUT (Bottom) */}
             <div className="p-2 border-t border-white/10">
                 <button 
-                    className={`
-                        flex items-center gap-4 px-3 py-3 w-full rounded-xl text-zinc-400 hover:bg-red-500/10 hover:text-red-500 transition-colors
-                        ${isCollapsed ? 'justify-center' : ''}
-                    `}
+                    className={`cursor-pointer flex items-center gap-4 px-3 py-3 w-full rounded-xl text-Text dark:text-Dark_Text hover:bg-red-500/10  transition-colors
+                    ${isCollapsed ? 'justify-center' : ''}`} onClick={logout}
                 >
                     <LogOut size={20} strokeWidth={1.5} />
-                    {!isCollapsed && <span className="font-medium">LOGOUT</span>}
+                    {!isCollapsed && <span className="font-medium hover:text-red-500">LOGOUT</span>}
                 </button>
             </div>
         </aside>

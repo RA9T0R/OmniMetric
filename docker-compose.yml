@@ -1,21 +1,68 @@
+version: '3.8'
+
 services:
-  # 1. The AI Backend (FastAPI + Python)
+  # ==============================
+  # 1. INFRASTRUCTURE (DB & S3)
+  # ==============================
+  
+  # Database (PostgreSQL)
+  db:
+    image: postgres:15
+    container_name: omnimetric-db
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: omnimetric_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+
+  # Object Storage (MinIO)
+  minio:
+    image: quay.io/minio/minio
+    container_name: omnimetric-minio
+    ports:
+      - "9000:9000" # API
+      - "9001:9001" # Console
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: password123
+    command: server /data --console-address ":9001"
+    volumes:
+      - ./minio_data:/data
+
+  # ==============================
+  # 2. APPLICATION SERVICES
+  # ==============================
+
+  # The AI Backend (FastAPI)
   backend:
     build: ./backend
     container_name: future_backend
-    # Important: reload allows you to change code without restarting docker
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ./backend:/app
     ports:
       - "8000:8000"
+    depends_on:
+      - db
+      - minio
     environment:
-      # FIX FOR BACKEND: Forces uvicorn to check for file changes constantly
       - WATCHFILES_FORCE_POLLING=true
-    # Removed 'depends_on: db'
-    # Removed 'environment: DATABASE_URL'
+      
+      # Database Config (สังเกต: host คือ 'db' ไม่ใช่ 'localhost')
+      - DATABASE_URL=postgresql://user:password@db:5432/omnimetric_db
+      
+      # MinIO Config (สังเกต: endpoint คือ 'minio' ไม่ใช่ 'localhost')
+      - AWS_ACCESS_KEY_ID=admin
+      - AWS_SECRET_ACCESS_KEY=password123
+      - AWS_REGION=us-east-1
+      - S3_ENDPOINT_URL=http://minio:9000
+      - S3_BUCKET_NAME=omnimetric-storage
 
-  # 2. The Frontend (Next.js)
+  # The Frontend (Next.js)
   frontend:
     build: ./frontend
     container_name: future_frontend
@@ -23,13 +70,12 @@ services:
       - "3000:3000"
     volumes:
       - ./frontend:/app
-      - /app/node_modules # Prevents host node_modules from overwriting container
+      - /app/node_modules
     depends_on:
       - backend
     environment:
+      # Browser เข้าหา API ต้องผ่าน localhost เพราะ browser รันในเครื่องคุณ ไม่ใช่ใน docker
       - NEXT_PUBLIC_API_URL=http://localhost:8000
-      # FIX FOR FRONTEND: Forces Next.js (Webpack) to check for file changes
+      - PYTHONUNBUFFERED=1
       - WATCHPACK_POLLING=true
       - CHOKIDAR_USEPOLLING=true
-
-# Removed 'volumes: postgres_data' because no DB is using it

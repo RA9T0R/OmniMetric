@@ -16,7 +16,11 @@ import {
 } from 'lucide-react';
 import { DUMMY_PROJECT_DETAIL } from '@/lib/constants';
 import Link from 'next/link';
+import Image from 'next/image';
 import ProjectUploadModal from '@/components/ProjectUploadModal';
+import NormalImageViewer from '@/components/viewers/NormalImageViewer';
+import PanoramaImageViewer from '@/components/viewers/PanoramaImageViewer';
+import SelectionPopup from '@/components/SelectionPopup';
 
 const ProjectDetailPage = ({ params }: { params: { id: string } }) => {
     // 1. State
@@ -26,14 +30,16 @@ const ProjectDetailPage = ({ params }: { params: { id: string } }) => {
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
     const [manualPage, setManualPage] = useState(1);
+    const [isPointerActive, setIsPointerActive] = useState(false);
+    const [selectionData, setSelectionData] = useState<any>(null);
+    const [isPopupOpen, setIsPopupOpen] = useState(false);
 
-    // Get Data
     const project = DUMMY_PROJECT_DETAIL;
     const currentImage = project.images[currentImageIndex];
     const detectedObjects = currentImage.objects;
 
-    // Effect: Sync manual page input when index changes
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setManualPage(currentImageIndex + 1);
         if (currentImage.objects.length > 0) {
             setSelectedObjectId(currentImage.objects[0].id);
@@ -42,7 +48,6 @@ const ProjectDetailPage = ({ params }: { params: { id: string } }) => {
         }
     }, [currentImageIndex, currentImage]);
 
-    // Effect: Auto-Run Logic
     useEffect(() => {
         let interval: NodeJS.Timeout;
         if (isPlaying) {
@@ -53,7 +58,6 @@ const ProjectDetailPage = ({ params }: { params: { id: string } }) => {
         return () => clearInterval(interval);
     }, [isPlaying, project.images.length]);
 
-    // Handlers
     const handleNextImage = () => {
         setCurrentImageIndex((prev) => (prev + 1) % project.images.length);
     };
@@ -68,6 +72,23 @@ const ProjectDetailPage = ({ params }: { params: { id: string } }) => {
         if (!isNaN(val) && val >= 1 && val <= project.images.length) {
             setCurrentImageIndex(val - 1);
         }
+    };
+
+    const handlePixelSelect = (data: any) => {
+        setSelectionData(data); // Save the clicked stats
+        setIsPopupOpen(true);   // Open the modal
+        // Note: We do NOT turn off isPointerActive yet, so the user can keep clicking if they missed
+    };
+
+    const handleProcessAI = () => {
+        console.log("SENDING TO API:", selectionData);
+
+        // TODO: Call your backend API here
+        // await api.processImage(currentImage.id, selectionData);
+
+        setIsPopupOpen(false);      // Close modal
+        setIsPointerActive(false);  // Turn off pointer mode (optional)
+        alert(`AI Processing started for point: ${selectionData.x}, ${selectionData.y}`);
     };
 
     return (
@@ -107,59 +128,65 @@ const ProjectDetailPage = ({ params }: { params: { id: string } }) => {
 
                 {/* LEFT: IMAGE VIEWER CONTAINER (Span 9) */}
                 <div className="lg:col-span-11 flex flex-col overflow-hidden gap-4">
-
                     <div className="relative rounded-xl border-2 border-BG_light dark:border-Dark_BG_light h-[500px] lg:h-auto lg:flex-1 overflow-hidden flex items-center justify-center bg-zinc-900">
-                        <div className="relative w-full h-full">
-                            {/* Image */}
-                            <div className={`w-full h-full ${viewMode === 'normal' ? 'bg-zinc-800' : 'bg-zinc-900'} flex items-center justify-center text-zinc-600`}>
-                                <img
-                                    src="https://images.unsplash.com/photo-1517457373958-b7bdd4587205?q=80&w=2069&auto=format&fit=crop"
-                                    alt="Project View"
-                                    className={`w-full h-full object-cover transition-opacity duration-500 ${viewMode === 'depth' ? 'opacity-30 grayscale invert' : 'opacity-100'}`}
-                                />
-                            </div>
+                        {/* CONDITIONAL RENDERING BASED ON IMAGE TYPE */}
+                        {currentImage.type === 'panorama' ? (
+                            <PanoramaImageViewer
+                                url={currentImage.url}
+                                depthUrl={currentImage.depthUrl}
+                                viewMode={viewMode} // Pass viewMode to 360 viewer
+                                isPointerActive={isPointerActive}
+                                onPixelSelect={handlePixelSelect}
+                            />
+                        ) : (
+                            <NormalImageViewer
+                                url={currentImage.url}
+                                depthUrl={currentImage.depthUrl}
+                                viewMode={viewMode}
+                                objects={detectedObjects}
+                                selectedObjectId={selectedObjectId}
+                                isPointerActive={isPointerActive}
+                                onObjectClick={setSelectedObjectId}
+                                onPixelSelect={handlePixelSelect}
+                            />
+                        )}
 
-                            {/* Bounding Box (Single Selection) */}
-                            {viewMode === 'normal' && detectedObjects.map((obj) => {
-                                if (obj.id !== selectedObjectId) return null;
-                                return (
-                                    <div
-                                        key={obj.id}
-                                        className="absolute border-2 border-primary bg-primary/10 z-20 shadow-[0_0_15px_rgba(255,193,7,0.5)] transition-all duration-200"
-                                        style={{
-                                            top: `${obj.box.top}%`,
-                                            left: `${obj.box.left}%`,
-                                            width: `${obj.box.width}%`,
-                                            height: `${obj.box.height}%`
-                                        }}
-                                    >
-                                        <div className="absolute -top-7 left-0 bg-blue-600 text-white text-xs px-2 py-1 rounded-md font-bold shadow-sm">
-                                            {obj.distance}m
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                        <SelectionPopup
+                            isOpen={isPopupOpen}
+                            onClose={() => setIsPopupOpen(false)}
+                            onProcess={handleProcessAI}
+                            data={selectionData}
+                        />
 
-                            {/* OVERLAY CONTROLS (Only Toggles & Hand) */}
-                            <div className="absolute bottom-4 left-4 flex items-center gap-2 z-30">
-                                <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md p-1 rounded-xl border border-white/10">
-                                    <button
-                                        onClick={() => setViewMode('normal')}
-                                        className={`cursor-pointer px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'normal' ? 'bg-white text-black' : 'text-white hover:bg-white/10'}`}
-                                    >
-                                        Normal
-                                    </button>
-                                    <button
-                                        onClick={() => setViewMode('depth')}
-                                        className={`cursor-pointer px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'depth' ? 'bg-white text-black' : 'text-white hover:bg-white/10'}`}
-                                    >
-                                        Depth Map
-                                    </button>
-                                </div>
-                                <button className="cursor-pointer p-2 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 text-white hover:bg-white/20 transition-all">
-                                    <Pointer size={18} />
+                        {/* OVERLAY CONTROLS */}
+                        <div className="absolute bottom-4 left-4 flex items-center gap-2 z-30">
+                            {/* View Mode Toggle (Only show for Normal images if Panorama doesn't have depth) */}
+                            <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md p-1 rounded-xl border border-white/10">
+                                <button
+                                    onClick={() => setViewMode('normal')}
+                                    className={`cursor-pointer px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'normal' ? 'bg-white text-black' : 'text-white hover:bg-white/10'}`}
+                                >
+                                    Normal
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('depth')}
+                                    className={`cursor-pointer px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'depth' ? 'bg-white text-black' : 'text-white hover:bg-white/10'}`}
+                                >
+                                    Depth Map
                                 </button>
                             </div>
+
+                            <button
+                                onClick={() => setIsPointerActive(!isPointerActive)}
+                                className={`cursor-pointer p-2 rounded-xl backdrop-blur-md border border-white/10 transition-all ${
+                                    isPointerActive 
+                                    ? 'bg-power text-black' // Active State Style
+                                    : 'bg-black/60 text-white hover:bg-white/20' 
+                                }`}
+                                title={isPointerActive ? "Cancel Selection" : "Select Object for AI"}
+                            >
+                                <Pointer size={18} />
+                            </button>
                         </div>
                     </div>
 

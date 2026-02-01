@@ -14,3 +14,7 @@ build/
 
 # --- JetBrains IDE (PyCharm) ---
 .idea/
+
+# --- Database & Storage Volumes ---
+postgre_data/
+minio_data/

@@ -90,7 +90,7 @@ const ProjectUploadModal = ({ isOpen, onClose, mode }: ProjectUploadModalProps) 
                         </div>
 
                         <div className="space-y-3 md:space-y-4 text-xs">
-                            <hr className="h-px text-white/10 w-full" />
+                            <hr className="h-px text-subtext dark:text-Dark_subtext w-full" />
                             <div>
                                 <p className="text-subtext dark:text-Dark_subtext mb-2 font-light">Unit Cost (per image)</p>
                                 <div className="space-y-2">
@@ -110,12 +110,12 @@ const ProjectUploadModal = ({ isOpen, onClose, mode }: ProjectUploadModalProps) 
                                     </div>
                                 </div>
                             </div>
-                            <hr className="h-px text-white/10 w-full border-dashed" />
+                            <hr className="h-px text-subtext dark:text-Dark_subtext w-full border-dashed" />
                             <div className="flex justify-between text-Text dark:text-Dark_Text font-light">
                                 <span>Subtotal</span>
                                 <span>{pricePerImage} Token / Image</span>
                             </div>
-                            <hr className="h-px text-white/10 w-full" />
+                            <hr className="h-px text-subtext dark:text-Dark_subtext w-full" />
                             <div className="flex flex-col justify-between text-Text dark:text-Dark_Text">
                                 <span className="text-subtext dark:text-Dark_subtext mb-1 font-light">Quantity</span>
                                 <div className="flex justify-between">
@@ -123,7 +123,7 @@ const ProjectUploadModal = ({ isOpen, onClose, mode }: ProjectUploadModalProps) 
                                     <span>{files.length || 0} Image</span>
                                 </div>
                             </div>
-                            <div className="h-px bg-white/10 w-full" />
+                            <hr className="h-px text-subtext dark:text-Dark_subtext w-full" />
                             <div>
                                 <p className="text-subtext dark:text-Dark_subtext uppercase tracking-widest mb-2 font-light">Total Estimate</p>
                                 <div className="flex items-center gap-3 text-power dark:text-Dark_power text-2xl md:text-3xl font-bold">
@@ -259,13 +259,13 @@ const ProjectUploadModal = ({ isOpen, onClose, mode }: ProjectUploadModalProps) 
                     {/* MODE: ADD (Summary Check Layout) */}
                     {mode === 'add' && (
                         <div className="mt-4 flex flex-col gap-2">
-                            <div className="text-sm font-bold text-white">Summary Check</div>
-                            <div className="text-xs text-zinc-400">
+                            <div className="text-sm font-bold text-Text dark:text-Dark_Text">Summary Check</div>
+                            <div className="text-xs text-subtext dark:text-Dark_subtext">
                                 Adding {files.length} Images at {pricePerImage} Token/Image
                             </div>
 
                             <div className="flex items-center gap-2 mt-1 mb-2">
-                                <span className="text-xl md:text-2xl font-bold text-white">Total New Cost :</span>
+                                <span className="text-xl md:text-2xl font-bold text-Text dark:text-Dark_Text">Total New Cost :</span>
                                 <span className="text-xl md:text-2xl font-bold text-power dark:text-Dark_power">
                                     {files.length > 0 ? totalCost : '??'} Tokens
                                 </span>

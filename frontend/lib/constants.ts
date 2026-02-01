@@ -234,9 +234,10 @@ export const DUMMY_PROJECT_DETAIL = {
     images: [
         {
             id: "img_01",
-            url: "/images/sample_street.jpg", // You can use a placeholder if you don't have this
-            depthUrl: "/images/sample_street_depth.jpg", // Placeholder for depth map
+            url: "/Images/people.jpg",
+            depthUrl: "/Images/people_heap.jpg",
             name: "Street_View_01",
+            type: "normal",
             uploadDate: "2024-02-20",
             objects: [
                 {
@@ -268,9 +269,10 @@ export const DUMMY_PROJECT_DETAIL = {
         },
         {
             id: "img_02",
-            url: "/images/sample_room.jpg",
-            depthUrl: "/images/sample_room_depth.jpg",
-            name: "Room_View_01",
+            url: "/images/pano2.jpg",
+            depthUrl: "/images/pano.jpg",
+            name: "pano_View_01",
+            type: "panorama",
             uploadDate: "2024-02-21",
             objects: [] // Empty for now
         }

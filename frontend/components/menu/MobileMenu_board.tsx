@@ -7,6 +7,7 @@ import { sidebar_content, icons } from '@/lib/constants';
 import { X, LogOut } from 'lucide-react';
 import Image from "next/image";
 import { useTheme } from "next-themes";
+import { useAuth } from "@/hooks/useAuth";
 
 interface MobileMenuProps {
     isOpen: boolean;
@@ -16,6 +17,7 @@ interface MobileMenuProps {
 const MobileMenu_board = ({ isOpen, setIsOpen }: MobileMenuProps) => {
     const pathname = usePathname();
     const { theme } = useTheme();
+    const {logout} = useAuth();
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -83,7 +85,7 @@ const MobileMenu_board = ({ isOpen, setIsOpen }: MobileMenuProps) => {
 
                 {/* Logout */}
                 <div className="p-4 border-t border-BG_light dark:border-Dark_BG_light pb-8">
-                    <button className="flex items-center gap-4 px-3 py-3 w-full rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-colors text-Text dark:text-Dark_Text">
+                    <button onClick={logout} className="flex items-center gap-4 px-3 py-3 w-full rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-colors text-Text dark:text-Dark_Text">
                         <LogOut size={20} />
                         <span className="font-medium">LOGOUT</span>
                     </button>

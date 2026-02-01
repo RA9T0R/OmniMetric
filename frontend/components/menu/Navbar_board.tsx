@@ -1,10 +1,10 @@
 'use client';
-
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import Link from 'next/link';
-import {Coins, Settings, LogOut, Menu, User as UserIcon, HandCoins, ArrowDown} from 'lucide-react';
+import { Coins, Settings, LogOut, Menu, User as UserIcon, HandCoins, ArrowDown } from 'lucide-react';
 import ThemeToggle from "@/components/theme-toggle";
-import { DUMMY_USER } from "@/lib/constants";
+import Image from "next/image";
+import { useAuth } from "@/hooks/useAuth";
 
 interface NavbarBoardProps {
     onMobileMenuClick: () => void;
@@ -12,65 +12,86 @@ interface NavbarBoardProps {
 
 const Navbar_board = ({ onMobileMenuClick }: NavbarBoardProps) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const { user, loading, logout } = useAuth();
 
-    const user = {
-        name: DUMMY_USER.username,
-        email: DUMMY_USER.email,
-        tokens: DUMMY_USER.credit_balance
+    if (loading) {
+        return (
+            <header className="navbar-board-header flex justify-between items-center">
+                <div className="flex gap-4">
+                   <div className="navbar-btn-base size-12 w-40 animate-pulse"></div>
+                   <div className="navbar-btn-base size-12 animate-pulse"></div>
+                </div>
+                <div className="flex gap-4">
+                   <div className="navbar-btn-base size-12 animate-pulse"></div>
+                   <div className="navbar-btn-base size-12 animate-pulse"></div>
+                </div>
+            </header>
+        );
+    }
+
+    const userData = user || {
+        username: "Guest",
+        email: "No Email",
+        credit_balance: 0,
+        profile_picture_url: null
     };
 
     return (
         <header className="navbar-board-header">
-
              <div className="flex items-center gap-2 md:gap-4">
-                <button
-                    onClick={onMobileMenuClick}
-                    className="md:hidden p-2 text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg"
-                >
+                <button onClick={onMobileMenuClick} className="md:hidden p-2 text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg">
                     <Menu size={24} />
                 </button>
 
                 {/* User Dropdown */}
                 <div className="relative z-50">
-                    <button
-                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                        className="navbar-user-trigger"
-                    >
-                        <div className="size-8 rounded-full bg-zinc-700 flex items-center justify-center text-white font-bold text-xs border border-white/10">
-                            <UserIcon size={16} />
+                    <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="navbar-user-trigger">
+                        <div className="size-8 rounded-full bg-zinc-700 flex items-center justify-center text-white font-bold text-xs border border-white/10 overflow-hidden">
+                            {userData.profile_picture_url ? (
+                                <Image
+                                    src={userData.profile_picture_url}
+                                    alt="Profile" width={16} height={16}
+                                    className="w-full h-full object-cover" unoptimized
+                                />
+                            ) : (
+                                <UserIcon size={16} />
+                            )}
                         </div>
                         <div className="text-left hidden md:block">
-                            <p className="text-sm font-bold text-Text dark:text-Dark_Text leading-none">{user.name}</p>
-                            <p className="text-[10px] text-subtext dark:text-Dark_subtext mt-1 truncate max-w-[150px]">{user.email}</p>
+                            <p className="text-sm font-bold text-Text dark:text-Dark_Text leading-none">{userData.username}</p>
+                            <p className="text-[10px] text-subtext dark:text-Dark_subtext mt-1 truncate max-w-[150px]">{userData.email}</p>
                         </div>
-                        <ArrowDown
-                            size={16}
-                            className={`text-subtext dark:text-Dark_subtext transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
-                        />
+                        <ArrowDown size={16} className={`text-subtext dark:text-Dark_subtext transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}/>
                     </button>
 
-                    {/* Custom Dropdown Card */}
                     {isDropdownOpen && (
                         <>
                             <div className="cursor-pointer fixed inset-0 z-10" onClick={() => setIsDropdownOpen(false)} />
-
                             <div className="navbar-dropdown-card">
-
                                 <div className="flex items-center gap-4 mb-4">
-                                    <div className="size-12 rounded-full border-2 border-white/20 flex items-center justify-center text-white">
-                                        <UserIcon size={28} />
+                                    <div className="size-12 rounded-full border-2 border-white/20 flex items-center justify-center text-white bg-zinc-800 overflow-hidden">
+                                        {userData.profile_picture_url ? (
+                                            <Image
+                                                src={userData.profile_picture_url}
+                                                alt="Profile" width={16} height={16}
+                                                className="w-full h-full object-cover" unoptimized
+                                            />
+                                        ) : (
+                                            <UserIcon size={28} />
+                                        )}
                                     </div>
-                                    <h3 className="text-xl font-bold text-Text dark:text-Dark_Text">
-                                        {user.name}
+
+                                    <h3 className="text-xl font-bold text-Text dark:text-Dark_Text truncate max-w-[180px]">
+                                        {userData.username}
                                     </h3>
                                 </div>
 
                                 <div className="space-y-2 mb-6 text-sm">
                                     <p className="text-subtext dark:text-Dark_subtext">
-                                        Token : <span className="text-Text dark:text-Dark_Text font-medium">{user.tokens}</span>
+                                        Token : <span className="text-Text dark:text-Dark_Text font-medium">{userData.credit_balance}</span>
                                     </p>
                                     <p className="text-subtext dark:text-Dark_subtext truncate">
-                                        Email : <span className="text-Text dark:text-Dark_Text font-medium">{user.email}</span>
+                                        Email : <span className="text-Text dark:text-Dark_Text font-medium">{userData.email}</span>
                                     </p>
                                 </div>
 
@@ -83,8 +104,8 @@ const Navbar_board = ({ onMobileMenuClick }: NavbarBoardProps) => {
                                         </button>
                                     </Link>
 
-                                    <button onClick={() => setIsDropdownOpen(false)}
-                                        className="flex-1 navbar-dropdown-item">
+                                    <button onClick={logout}
+                                        className="flex-1 navbar-dropdown-item text-red-400 hover:text-red-300">
                                         <LogOut size={16} />
                                         Logout
                                     </button>
@@ -96,9 +117,8 @@ const Navbar_board = ({ onMobileMenuClick }: NavbarBoardProps) => {
 
                 <div className="hidden md:flex items-center gap-2 px-4 py-2 text-power dark:text-Dark_power">
                     <Coins size={24} />
-                    <span className="font-bold text-sm whitespace-nowrap">Token : {user.tokens}</span>
+                    <span className="font-bold text-sm whitespace-nowrap">Token : {userData.credit_balance}</span>
                 </div>
-
             </div>
 
             <div className="flex items-center gap-4">
