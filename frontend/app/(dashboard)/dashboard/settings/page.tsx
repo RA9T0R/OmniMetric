@@ -3,15 +3,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { User, Mail, Lock, Loader2, CheckCircle, AlertCircle, Camera } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import Cookies from 'js-cookie';
+import { UserUpdatePayload } from '@/types/type';
 import Image from "next/image";
-
-interface UserUpdatePayload {
-    username?: string;
-    email?: string;
-    old_password?: string;
-    new_password?: string;
-}
 
 interface StatusState {
     type: 'success' | 'error' | '';
@@ -19,7 +12,8 @@ interface StatusState {
 }
 
 const SettingsPage = () => {
-    const { user, refreshUser } = useAuth();
+    const { user, updateProfile, updateAvatar } = useAuth();
+
     const [isLoading, setIsLoading] = useState(false);
     const [status, setStatus] = useState<StatusState>({ type: '', message: '' });
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -68,24 +62,11 @@ const SettingsPage = () => {
         setIsLoading(true);
         setStatus({ type: '', message: '' });
 
-        const token = Cookies.get('token');
-        const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
         try {
             if (selectedFile) {
-                const formDataImage = new FormData();
-                formDataImage.append('file', selectedFile);
-
-                const resImg = await fetch(`${API_URL}/api/v1/users/me/avatar`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
-                    body: formDataImage
-                });
-
-                if (!resImg.ok) throw new Error('Failed to upload avatar');
+                await updateAvatar(selectedFile);
             }
 
-            // --- STEP B: Update Text ---
             const payload: UserUpdatePayload = {};
             if (formData.username !== user?.username) payload.username = formData.username;
             if (formData.email !== user?.email) payload.email = formData.email;
@@ -98,34 +79,22 @@ const SettingsPage = () => {
                 payload.new_password = formData.new_password;
             }
 
+            if (Object.keys(payload).length > 0) {
+                await updateProfile(payload);
+            }
+
             if (!selectedFile && Object.keys(payload).length === 0) {
                 setIsLoading(false);
                 return;
             }
 
-            if (Object.keys(payload).length > 0) {
-                const resText = await fetch(`${API_URL}/api/v1/users/me`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                const dataText = await resText.json();
-                if (!resText.ok) throw new Error(dataText.detail || 'Failed to update profile info');
-            }
-
-            // --- STEP C: Success ---
             setStatus({ type: 'success', message: 'Changes saved successfully!' });
             setFormData(prev => ({ ...prev, old_password: '', new_password: '' }));
-            setSelectedFile(null);
-            await refreshUser();
+            setSelectedFile(null); // Clear selected file
+
         } catch (error: unknown) {
             console.error(error);
             let errorMessage = 'Something went wrong';
-
             if (error instanceof Error) {
                 errorMessage = error.message;
             }
@@ -151,7 +120,6 @@ const SettingsPage = () => {
                 </div>
 
                 <div className="lg:col-span-8 ">
-
                     {/* --- Avatar Section --- */}
                     <div className="mb-8">
                         <span className="text-xl font-bold text-Text dark:text-Dark_Text">Avatar</span>
@@ -163,19 +131,22 @@ const SettingsPage = () => {
                                 className="hidden"
                                 accept="image/*"
                             />
+                            {/* Avatar Circle */}
                             <div onClick={handleAvatarClick} className="group relative size-24 rounded-full border border-BG_light dark:border-Dark_BG_light flex items-center justify-center bg-gray-100 dark:bg-gray-800 cursor-pointer overflow-hidden transition-all hover:border-power">
                                 {previewUrl ? (
                                     <Image
                                         src={previewUrl}
-                                        alt="Avatar Preview" width={16} height={16}
-                                        className="w-full h-full object-cover" unoptimized
+                                        alt="Avatar Preview"
+                                        width={96}
+                                        height={96}
+                                        className="w-full h-full object-cover"
+                                        unoptimized
                                     />
                                 ) : (
                                      <div className="size-24 rounded-full border border-BG_light dark:border-Dark_BG_light flex items-center justify-center bg-transparent">
                                         <User className="size-18 dark:text-BG_light text-Dark_BG_light" strokeWidth={1} />
                                     </div>
                                 )}
-
                                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                     <Camera className="text-white" size={24} />
                                 </div>
@@ -210,6 +181,7 @@ const SettingsPage = () => {
 
                     {/* --- Form --- */}
                     <form className="space-y-6" onSubmit={handleSave}>
+                        {/* Username */}
                         <div className="space-y-2">
                             <label className="text-subtext dark:text-Dark_subtext text-sm">Full name</label>
                             <div className="relative group">

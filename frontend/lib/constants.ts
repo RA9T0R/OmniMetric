@@ -1,12 +1,12 @@
 import {
-    House, // Home
-    Blocks,      // Projects
-    HandCoins,             // Price
-    PencilLine,        // Description
+    House,
+    Blocks,
+    HandCoins,
+    PencilLine,
     LogOut,
     Settings,
-    Coins,           // Added for Token icon if needed
-    Menu             // Added for mobile menu
+    Coins,
+    Menu
 } from "lucide-react";
 
 export const icons = {
@@ -24,7 +24,7 @@ export type SidebarItem = {
     name: string;
     path: string;
     icon: keyof typeof icons;
-    separator?: boolean; // <--- ADDED THIS
+    separator?: boolean;
 };
 
 export const sidebar_content: SidebarItem[] = [
@@ -42,7 +42,7 @@ export const sidebar_content: SidebarItem[] = [
         icon: "HandCoins",
         name: "Price",
         path: "/dashboard/price",
-        separator: true, // <--- This will trigger the line BEFORE this item
+        separator: true,
     },
     {
         icon: "PencilLine",
@@ -133,7 +133,7 @@ export const RECENT_PROJECTS = [
         name: "Somewhere",
         model: "ProTypeModel",
         imageCount: 10,
-        icon: "star" // just a string reference for now
+        icon: "star"
     },
     {
         id: "rp_2",
@@ -161,17 +161,18 @@ export const TYPE_PRICES = {
         { name: "Normal", price: "XX Token", icon: "image" }
     ]
 };
+
 // ==========================================
 // 1. PRICING CONFIG (For Calculator Logic)
 // ==========================================
 export const PRICING_CONFIG = {
     models: {
-        'ProTypeModel': 10,  // Cost per image
+        'ProTypeModel': 10,
         'FastTypeModel': 5
     },
     inputs: {
-        '360_degree': 5,     // Extra cost per image
-        'normal': 2
+        '360_degree': 5,
+        'Normal': 2
     }
 };
 
@@ -186,8 +187,8 @@ export const DUMMY_PROJECTS = [
         modelName: "ProTypeModel",
         inputType: "Normal Image",
         imageCount: 10,
-        status: "Completed", // Clickable
-        thumbnail: "/images/project_thumb_1.jpg" // We'll use a placeholder color if missing
+        status: "Completed",
+        thumbnail: "/images/project_thumb_1.jpg"
     },
     {
         projectId: "proj_002",
@@ -196,7 +197,7 @@ export const DUMMY_PROJECTS = [
         modelName: "FastTypeModel",
         inputType: "360 Image",
         imageCount: 100,
-        status: "Processing", // NOT Clickable (Locked)
+        status: "Processing",
         thumbnail: "/images/project_thumb_2.jpg"
     },
     {
@@ -206,7 +207,7 @@ export const DUMMY_PROJECTS = [
         modelName: "FastTypeModel",
         inputType: "360 Image",
         imageCount: 100,
-        status: "Failed", // Error State
+        status: "Failed",
         thumbnail: "/images/project_thumb_3.jpg"
     },
     {
@@ -245,9 +246,8 @@ export const DUMMY_PROJECT_DETAIL = {
                     label: "Person 1",
                     confidence: 99,
                     distance: 7.38,
-                    // Percentages for responsive positioning: { top, left, width, height }
                     box: { top: 25, left: 45, width: 10, height: 45 },
-                    color: "green" // green, yellow, red
+                    color: "green"
                 },
                 {
                     id: "obj_2",
@@ -274,7 +274,7 @@ export const DUMMY_PROJECT_DETAIL = {
             name: "pano_View_01",
             type: "panorama",
             uploadDate: "2024-02-21",
-            objects: [] // Empty for now
+            objects: []
         }
     ]
 };

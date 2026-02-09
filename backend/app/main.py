@@ -7,10 +7,11 @@ from sqlalchemy.exc import OperationalError
 
 from app.config import settings
 from app.database import engine, Base
-from app.services.ai_service import ai_manager
 from app.services.storage import ensure_bucket_public
-from app.routers import images,users
 from app.models import user, project, analysis
+from app.routers import projects,users,analysis
+from app.services.model_loader import model_loader
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,15 +25,20 @@ async def lifespan(app: FastAPI):
             break
         except OperationalError:
             print(f"⚠️ Database not ready yet... waiting (Attempt {i + 1}/10)")
-            time.sleep(2)  # รอ 2 วินาทีแล้วลองใหม่
+            time.sleep(2)
         except Exception as e:
             print(f"🔥 Unexpected DB Error: {e}")
             time.sleep(2)
 
+    try:
+        model_loader.load_models()
+    except Exception as e:
+        print(f"❌ Failed to load AI Models: {e}")
+
     if not db_connected:
         print("❌ Could not connect to Database after retries. Exiting.")
         raise RuntimeError("Database Connection Failed")
-    ai_manager.load_models()
+
     yield
     print("🛑 Shutting down OmniMetric...")
 app = FastAPI(
@@ -54,8 +60,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(images.router, prefix="/api/v1/images", tags=["Images"])
-app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
+app.include_router(users.router, prefix="/users", tags=["Users"])
+app.include_router(projects.router, prefix="/projects", tags=["Projects"])
+app.include_router(analysis.router, prefix="/analysis", tags=["Analysis"])
 
 @app.get("/")
 def root():

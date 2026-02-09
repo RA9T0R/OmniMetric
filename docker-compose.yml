@@ -51,7 +51,7 @@ services:
       - minio
     environment:
       - WATCHFILES_FORCE_POLLING=true
-      
+      - PYTHONUNBUFFERED=1
       # Database Config (สังเกต: host คือ 'db' ไม่ใช่ 'localhost')
       - DATABASE_URL=postgresql://user:password@db:5432/omnimetric_db
       

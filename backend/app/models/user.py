@@ -23,7 +23,9 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
+    # transaction (One-to-Many)
     transactions = relationship("Transaction", back_populates="user", cascade="all, delete")
+    # project (One-to-Many)
     projects = relationship("Project", back_populates="user",cascade="all, delete")
 
     __table_args__ = (
@@ -40,6 +42,7 @@ class Transaction(Base):
     type = Column(String(20), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+    # User (Many-to-One)
     user = relationship("User", back_populates="transactions")
 
     __table_args__ = (

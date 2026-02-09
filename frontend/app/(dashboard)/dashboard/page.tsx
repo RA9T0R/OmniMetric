@@ -14,9 +14,11 @@ import {
     Code
 } from 'lucide-react';
 import { DASHBOARD_STATS, RECENT_PROJECTS, TYPE_PRICES } from '@/lib/constants';
+import { useProjects } from '@/hooks/useProjects';
 
 export default function DashboardPage() {
     const { theme } = useTheme();
+    const { projects} = useProjects();
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -26,14 +28,11 @@ export default function DashboardPage() {
 
     return (
         <div className="w-full flex flex-col gap-6 xl:max-w-9/10 mx-auto pb-12">
-
-            {/* 1. Header Text */}
             <div className="flex flex-col gap-1">
                 <h1 className="text-3xl md:text-4xl font-bold text-Text dark:text-Dark_Text">Home Page</h1>
                 <p className="text-xs font-light text-subtext dark:text-Dark_subtext">All Thing in you omnimetric</p>
             </div>
 
-            {/* 2. TOP ROW: Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Total Projects Card */}
                 <div className="dashboard-stat-card">
@@ -42,13 +41,12 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex items-end justify-between w-full z-10">
                         <span className="text-6xl font-bold text-Text dark:text-Dark_Text tracking-tight leading-none">
-                            {DASHBOARD_STATS.totalProjects}
+                            {projects.length}
                         </span>
                         <LayoutGrid size={64} strokeWidth={1.5} className="text-Text dark:text-Dark_Text opacity-80 mb-1" />
                     </div>
                 </div>
 
-                {/* Total Token Card */}
                 <div className="dashboard-stat-card">
                     <div className="items-start w-full z-10">
                         <h3 className="text-subtext dark:text-Dark_subtext text-lg font-medium">Total Token</h3>
@@ -62,10 +60,7 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* 3. MIDDLE SECTION */}
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-
-                {/* Left: Recent Projects (Span 5) */}
                 <div className="xl:col-span-5 dashboard-panel-base p-4 flex flex-col">
                     <h3 className="text-xl font-bold text-Text dark:text-Dark_Text mb-6">Recent Projects</h3>
 
@@ -104,10 +99,7 @@ export default function DashboardPage() {
                 {/* Right: Type Price (Span 5) */}
                 <div className="xl:col-span-5 dashboard-panel-base p-4 flex flex-col">
                     <h3 className="text-xl font-bold text-Text dark:text-Dark_Text mb-6">Type Price</h3>
-
                     <div className="flex flex-col gap-4">
-
-                        {/* 1. MODEL GROUP BOX */}
                         <div className="dashboard-price-group-box">
                             <div className="flex items-center gap-2 mb-4 text-Text dark:text-Dark_Text">
                                 <Box size={24} strokeWidth={2} />
@@ -129,13 +121,11 @@ export default function DashboardPage() {
                             </div>
                         </div>
 
-                        {/* 2. IMAGE GROUP BOX */}
                         <div className="dashboard-price-group-box">
                             <div className="flex items-center gap-2 mb-4 text-Text dark:text-Dark_Text">
                                 <ImageIcon size={24} strokeWidth={2} />
                                 <span className="text-lg font-bold">Image</span>
                             </div>
-
                             <div className="space-y-4">
                                 {TYPE_PRICES.images.map((item, idx) => (
                                     <div key={idx} className="dashboard-price-row">
@@ -150,13 +140,11 @@ export default function DashboardPage() {
                                 ))}
                             </div>
                         </div>
-
                     </div>
                 </div>
 
             </div>
 
-            {/* 4. BOTTOM ROW: Short Description */}
             <div className="dashboard-panel-base p-8 flex flex-col justify-center">
                 <div className="flex items-center gap-2 mb-3 text-Text dark:text-Dark_Text">
                     <Code size={24} strokeWidth={2.5} />
@@ -166,7 +154,6 @@ export default function DashboardPage() {
                     Develop an online platform that uses artificial intelligence (AI) to detect objects and estimate metric depth and orientation from photographs, especially equirectangular projection photographs.
                 </p>
             </div>
-
         </div>
     );
 }

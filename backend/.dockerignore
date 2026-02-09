@@ -15,3 +15,5 @@ __pycache__
 # Ignore Docker stuff
 Dockerfile
 docker-compose.yml
+
+app/checkpoints/

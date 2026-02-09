@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import PriceCard from '@/components/PriceCard';
 import { PRICING_TIERS } from '@/lib/constants';
-import ProjectsPage from "@/app/(dashboard)/dashboard/projects/page";
 
 const PricePage = () => {
     const [selectedId, setSelectedId] = useState<string | null>(null);

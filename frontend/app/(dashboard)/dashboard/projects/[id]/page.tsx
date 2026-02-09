@@ -2,28 +2,31 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-    ChevronLeft,
-    Trash2,
-    Plus,
-    Search,
-    ChevronRight,
-    Layers,
-    Play,
-    Pause,
-    Pointer,
-    User,
-    Scan
+    ChevronLeft, Trash2, Plus, Search, ChevronRight, Layers, Play, Pause, Pointer, User, Scan, Loader2
 } from 'lucide-react';
-import { DUMMY_PROJECT_DETAIL } from '@/lib/constants';
 import Link from 'next/link';
-import Image from 'next/image';
+import { useRouter, useParams } from 'next/navigation';
 import ProjectUploadModal from '@/components/ProjectUploadModal';
 import NormalImageViewer from '@/components/viewers/NormalImageViewer';
 import PanoramaImageViewer from '@/components/viewers/PanoramaImageViewer';
 import SelectionPopup from '@/components/SelectionPopup';
+import MeasurementResultPopup from '@/components/MeasurementResultPopup';
 
-const ProjectDetailPage = ({ params }: { params: { id: string } }) => {
-    // 1. State
+import { useProjectDetail } from '@/hooks/useProjectDetail';
+import { useProjects } from '@/hooks/useProjects';
+
+import { PixelSelectionData } from '@/types/type';
+
+const ProjectDetailPage = () => {
+    // 1. เรียกใช้ Hook
+    const params = useParams();
+    const id = params.id as string;
+    const router = useRouter();
+
+    const { project, isLoading, error, refreshProject, measurePoint } = useProjectDetail(id);
+    const { deleteProject } = useProjects();
+
+    // 2. States
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [viewMode, setViewMode] = useState<'normal' | 'depth'>('normal');
     const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
@@ -31,126 +34,200 @@ const ProjectDetailPage = ({ params }: { params: { id: string } }) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [manualPage, setManualPage] = useState(1);
     const [isPointerActive, setIsPointerActive] = useState(false);
-    const [selectionData, setSelectionData] = useState<any>(null);
+
+    // Popup States
+    const [selectionData, setSelectionData] = useState<PixelSelectionData | null>(null);
     const [isPopupOpen, setIsPopupOpen] = useState(false);
 
-    const project = DUMMY_PROJECT_DETAIL;
-    const currentImage = project.images[currentImageIndex];
-    const detectedObjects = currentImage.objects;
+    const [resultData, setResultData] = useState<{distance: number, unit: string, x: number, y: number} | null>(null);
+    const [isResultPopupOpen, setIsResultPopupOpen] = useState(false);
 
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isMeasuring, setIsMeasuring] = useState(false);
+
+    // 3. Computed Values
+    const currentImage = project?.images[currentImageIndex];
+    const detectedObjects = currentImage?.objects || [];
+
+    const filteredObjects = detectedObjects.filter(obj =>
+        obj.label.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // Reset page & search & popups เมื่อเปลี่ยนรูป
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setManualPage(currentImageIndex + 1);
-        if (currentImage.objects.length > 0) {
-            setSelectedObjectId(currentImage.objects[0].id);
-        } else {
-            setSelectedObjectId(null);
+        if (manualPage !== currentImageIndex + 1) {
+            setManualPage(currentImageIndex + 1);
         }
-    }, [currentImageIndex, currentImage]);
+        setSelectedObjectId(null);
+        setSearchTerm('');
+        setIsPopupOpen(false);
+        setSelectionData(null);
+        setIsResultPopupOpen(false); 
+        setResultData(null);
+
+    }, [currentImageIndex, manualPage]);
 
     useEffect(() => {
         let interval: NodeJS.Timeout;
-        if (isPlaying) {
+        if (isPlaying && project && project.images.length > 0) {
             interval = setInterval(() => {
                 setCurrentImageIndex((prev) => (prev + 1) % project.images.length);
-            }, 2000);
+            }, 500);
         }
         return () => clearInterval(interval);
-    }, [isPlaying, project.images.length]);
+    }, [isPlaying, project]);
 
-    const handleNextImage = () => {
-        setCurrentImageIndex((prev) => (prev + 1) % project.images.length);
+    const handleDelete = async () => {
+        const confirmed = window.confirm(`Are you sure you want to delete project "${project?.title}"? This action cannot be undone.`);
+        if (confirmed) {
+            try {
+                await deleteProject(id);
+                router.push('/dashboard/projects');
+            } catch (err) {
+                alert("Failed to delete project");
+            }
+        }
     };
 
-    const handlePrevImage = () => {
-        setCurrentImageIndex((prev) => (prev === 0 ? project.images.length - 1 : prev - 1));
+    const handleObjectToggle = (objectId: string) => {
+        if (selectedObjectId === objectId) {
+            setSelectedObjectId(null);
+        } else {
+            setSelectedObjectId(objectId);
+        }
     };
+
+    const handleNextImage = () => { if (!project) return; setCurrentImageIndex((prev) => (prev + 1) % project.images.length); };
+    const handlePrevImage = () => { if (!project) return; setCurrentImageIndex((prev) => (prev === 0 ? project.images.length - 1 : prev - 1)); };
 
     const handlePageInput = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = parseInt(e.target.value);
         setManualPage(val);
-        if (!isNaN(val) && val >= 1 && val <= project.images.length) {
+        if (project && !isNaN(val) && val >= 1 && val <= project.images.length) {
             setCurrentImageIndex(val - 1);
         }
     };
 
-    const handlePixelSelect = (data: any) => {
-        setSelectionData(data); // Save the clicked stats
-        setIsPopupOpen(true);   // Open the modal
-        // Note: We do NOT turn off isPointerActive yet, so the user can keep clicking if they missed
+    const handlePixelSelect = (data: PixelSelectionData) => {
+        setSelectionData(data);
+        setIsPopupOpen(true);
     };
 
-    const handleProcessAI = () => {
-        console.log("SENDING TO API:", selectionData);
+    const handleProcessAI = async () => {
+        if (!selectionData || !currentImage) return;
 
-        // TODO: Call your backend API here
-        // await api.processImage(currentImage.id, selectionData);
+        setIsMeasuring(true);
+        setIsPopupOpen(false);
 
-        setIsPopupOpen(false);      // Close modal
-        setIsPointerActive(false);  // Turn off pointer mode (optional)
-        alert(`AI Processing started for point: ${selectionData.x}, ${selectionData.y}`);
+        try {
+            const result = await measurePoint({
+                image_id: currentImage.id,
+                x: selectionData.x,
+                y: selectionData.y,
+            });
+
+            if (result) {
+                setResultData({
+                    distance: result.distance,
+                    unit: result.unit,
+                    x: selectionData.x,
+                    y: selectionData.y
+                });
+                setIsResultPopupOpen(true);
+            }
+
+        } catch (error: any) {
+            console.error(error);
+            alert(`Error: ${error.message || "Failed to measure distance"}`);
+        } finally {
+            setIsMeasuring(false);
+            setIsPointerActive(false);
+            setSelectionData(null);
+        }
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center h-[calc(100vh-100px)] text-subtext gap-4">
+                <Loader2 className="animate-spin" size={48} />
+                <p>Loading Project Details...</p>
+            </div>
+        );
+    }
+
+    if (error || !project) {
+        return (
+            <div className="flex flex-col items-center justify-center h-[calc(100vh-100px)] text-subtext gap-4">
+                <Layers size={64} className="text-zinc-600" />
+                <h2 className="text-xl font-bold text-Text dark:text-Dark_Text">Project Not Found</h2>
+                <Link href="/dashboard/projects" className="text-power hover:underline">Back to Dashboard</Link>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full flex flex-col gap-4 lg:gap-6 xl:max-w-9/10 mx-auto pb-4 lg:pb-0 h-auto lg:h-[calc(100vh-110px)]">
-
-            {/* 1. Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
                 <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
-                         <Link href="/dashboard/projects" className="md:hidden text-subtext hover:text-white transition-colors">
-                            <ChevronLeft size={24} />
-                         </Link>
+                         <Link href="/dashboard/projects" className="md:hidden text-subtext hover:text-white transition-colors"><ChevronLeft size={24} /></Link>
                          <h1 className="text-3xl md:text-4xl font-bold text-Text dark:text-Dark_Text">{project.title}</h1>
                     </div>
-                    <p className="text-xs font-light text-subtext dark:text-Dark_subtext md:ml-0 ml-8">
-                        {project.description}
-                    </p>
+                    <p className="text-xs font-light text-subtext dark:text-Dark_subtext md:ml-0 ml-8">{project.description}</p>
                 </div>
-
                 <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => setIsUploadModalOpen(true)}
-                        className="btn-primary-action px-4 py-3 bg-secondary dark:bg-Dark_secondary text-black flex items-center gap-2"
-                    >
-                        <Plus size={18} />
-                        <span>Add Image</span>
-                    </button>
-                    <button className="btn-primary-action px-4 py-3 bg-red-500 dark:bg-red-600 text-white flex items-center gap-2">
-                        <Trash2 size={18} />
-                        <span>Delete Project</span>
-                    </button>
+                    <button onClick={() => setIsUploadModalOpen(true)} className="btn-primary-action px-4 py-3 bg-secondary dark:bg-Dark_secondary text-black flex items-center gap-2"><Plus size={18} /><span>Add Image</span></button>
+                    <button onClick={handleDelete} className="btn-primary-action px-4 py-3 bg-red-500 dark:bg-red-600 text-white flex items-center gap-2"><Trash2 size={18} /><span>Delete Project</span></button>
                 </div>
             </div>
 
-            {/* 2. Main Content Grid */}
+            {/* Main Grid */}
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-14 gap-6 min-h-0">
-
-                {/* LEFT: IMAGE VIEWER CONTAINER (Span 9) */}
+                {/* LEFT: IMAGE VIEWER */}
                 <div className="lg:col-span-11 flex flex-col overflow-hidden gap-4">
                     <div className="relative rounded-xl border-2 border-BG_light dark:border-Dark_BG_light h-[500px] lg:h-auto lg:flex-1 overflow-hidden flex items-center justify-center bg-zinc-900">
-                        {/* CONDITIONAL RENDERING BASED ON IMAGE TYPE */}
-                        {currentImage.type === 'panorama' ? (
-                            <PanoramaImageViewer
-                                url={currentImage.url}
-                                depthUrl={currentImage.depthUrl}
-                                viewMode={viewMode} // Pass viewMode to 360 viewer
-                                isPointerActive={isPointerActive}
-                                onPixelSelect={handlePixelSelect}
-                            />
+                        {project.images.length > 0 && currentImage ? (
+                            <>
+                                {currentImage.type === '360_degree' ? (
+                                    <PanoramaImageViewer
+                                        url={currentImage.url}
+                                        depthUrl={currentImage.depthUrl ?? undefined}
+                                        viewMode={viewMode}
+                                        isPointerActive={isPointerActive}
+                                        objects={detectedObjects}
+                                        selectedObjectId={selectedObjectId}
+                                        onObjectClick={handleObjectToggle}
+                                        onPixelSelect={handlePixelSelect}
+                                    />
+                                ) : (
+                                    <NormalImageViewer
+                                        url={currentImage.url}
+                                        depthUrl={currentImage.depthUrl ?? undefined}
+                                        viewMode={viewMode}
+                                        objects={detectedObjects}
+                                        selectedObjectId={selectedObjectId}
+                                        isPointerActive={isPointerActive}
+                                        onObjectClick={handleObjectToggle}
+                                        onPixelSelect={handlePixelSelect}
+                                    />
+                                )}
+
+                                {/* Controls Overlay */}
+                                <div className="absolute bottom-4 left-4 flex items-center gap-2 z-30">
+                                    <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md p-1 rounded-xl border border-white/10">
+                                        <button onClick={() => setViewMode('normal')} className={`cursor-pointer px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'normal' ? 'bg-white text-black' : 'text-white hover:bg-white/10'}`}>Normal</button>
+                                        <button onClick={() => setViewMode('depth')} className={`cursor-pointer px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'depth' ? 'bg-white text-black' : 'text-white hover:bg-white/10'}`}>Depth Map</button>
+                                    </div>
+                                    <button onClick={() => setIsPointerActive(!isPointerActive)} className={`cursor-pointer p-2 rounded-xl backdrop-blur-md border border-white/10 transition-all ${isPointerActive ? 'bg-power text-black' : 'bg-black/60 text-white hover:bg-white/20'}`} title="AI Pointer">
+                                        <Pointer size={18} />
+                                    </button>
+                                </div>
+                            </>
                         ) : (
-                            <NormalImageViewer
-                                url={currentImage.url}
-                                depthUrl={currentImage.depthUrl}
-                                viewMode={viewMode}
-                                objects={detectedObjects}
-                                selectedObjectId={selectedObjectId}
-                                isPointerActive={isPointerActive}
-                                onObjectClick={setSelectedObjectId}
-                                onPixelSelect={handlePixelSelect}
-                            />
+                            <div className="text-center text-subtext"><Scan size={48} className="mx-auto mb-2 opacity-50"/><p>No images in this project.</p><button onClick={() => setIsUploadModalOpen(true)} className="text-power hover:underline mt-2">Upload Now</button></div>
                         )}
 
+                        {/* ✅ Popup 1: Confirm Selection */}
                         <SelectionPopup
                             isOpen={isPopupOpen}
                             onClose={() => setIsPopupOpen(false)}
@@ -158,155 +235,70 @@ const ProjectDetailPage = ({ params }: { params: { id: string } }) => {
                             data={selectionData}
                         />
 
-                        {/* OVERLAY CONTROLS */}
-                        <div className="absolute bottom-4 left-4 flex items-center gap-2 z-30">
-                            {/* View Mode Toggle (Only show for Normal images if Panorama doesn't have depth) */}
-                            <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md p-1 rounded-xl border border-white/10">
-                                <button
-                                    onClick={() => setViewMode('normal')}
-                                    className={`cursor-pointer px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'normal' ? 'bg-white text-black' : 'text-white hover:bg-white/10'}`}
-                                >
-                                    Normal
-                                </button>
-                                <button
-                                    onClick={() => setViewMode('depth')}
-                                    className={`cursor-pointer px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'depth' ? 'bg-white text-black' : 'text-white hover:bg-white/10'}`}
-                                >
-                                    Depth Map
-                                </button>
-                            </div>
+                        {/* ✅ Popup 2: Result Display (NEW) */}
+                        <MeasurementResultPopup
+                            isOpen={isResultPopupOpen}
+                            onClose={() => setIsResultPopupOpen(false)}
+                            data={resultData}
+                        />
 
-                            <button
-                                onClick={() => setIsPointerActive(!isPointerActive)}
-                                className={`cursor-pointer p-2 rounded-xl backdrop-blur-md border border-white/10 transition-all ${
-                                    isPointerActive 
-                                    ? 'bg-power text-black' // Active State Style
-                                    : 'bg-black/60 text-white hover:bg-white/20' 
-                                }`}
-                                title={isPointerActive ? "Cancel Selection" : "Select Object for AI"}
-                            >
-                                <Pointer size={18} />
-                            </button>
-                        </div>
+                        {isMeasuring && (
+                            <div className="absolute inset-0 bg-black/50 z-50 flex flex-col items-center justify-center gap-2 backdrop-blur-sm animate-in fade-in">
+                                <Loader2 className="animate-spin text-power" size={32} />
+                                <span className="text-white font-bold text-sm tracking-wider">Measuring...</span>
+                            </div>
+                        )}
                     </div>
 
-                    {/* B. BOTTOM CONTROL BAR (Outside Image) */}
                     <div className="flex flex-col md:flex-row justify-between gap-4 shrink-0">
-
-                        {/* Row 1: Search & Navigation */}
                         <div className="flex flex-col justify-between gap-2">
-                            {/* Left: Search */}
                             <div className="relative max-w-96">
                                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-subtext dark:text-zinc-500" />
-                                <input
-                                    type="text"
-                                    placeholder="Search object..."
-                                    className="w-full bg-BG_light dark:bg-black/20 border border-BG_light dark:border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-sm text-Text dark:text-Dark_Text focus:outline-none focus:ring-1 focus:ring-power dark:focus:ring-Dark_power transition-all"
-                                />
+                                <input type="text" placeholder="Search object..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full lg:w-96 bg-BG_light dark:bg-black/20 border border-BG_light dark:border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-sm text-Text dark:text-Dark_Text focus:outline-none focus:ring-1 focus:ring-power dark:focus:ring-Dark_power transition-all" />
                             </div>
-
-                            {/* Row 2: Info Text */}
                             <div className="text-xs text-subtext dark:text-zinc-500 font-mono flex items-center gap-2">
-                                <span>Model Type : <span className="text-Text dark:text-zinc-300 font-bold">{project.modelType}</span></span>
+                                <span>Model : <span className="text-Text dark:text-zinc-300 font-bold">{project.modelType}</span></span>
                                 <span className="w-px h-3 bg-zinc-700"></span>
-                                <span>Image Type : <span className="text-Text dark:text-zinc-300 font-bold">{project.imageType}</span></span>
+                                <span>Type : <span className="text-Text dark:text-zinc-300 font-bold">{project.imageType}</span></span>
                             </div>
                         </div>
 
-                        {/* Right: Auto Run & Pagination */}
-                        <div className="flex justify-center items-center gap-3 py-1 md:p-3 bg-Main_BG dark:bg-Dark_Main_BG rounded-xl border border-BG_light dark:border-Dark_BG_light h-fit">
-                            {/* Auto Run */}
-                            <button
-                                onClick={() => setIsPlaying(!isPlaying)}
-                                className={`cursor-pointer size-10 rounded-xl flex items-center justify-center border transition-all ${isPlaying ? 'bg-power text-black border-power' : 'bg-BG_light dark:bg-black/20 border-BG_light dark:border-white/10 text-Text dark:text-Dark_Text hover:bg-black/5 dark:hover:bg-white/5'}`}
-                                title="Auto Run"
-                            >
-                                {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-0.5" />}
-                            </button>
-
-                            {/* Pagination Control */}
-                            <div className="h-10 flex items-center gap-1 bg-BG_light dark:bg-black/20 px-2 rounded-xl border border-BG_light dark:border-white/10">
-                                <button onClick={handlePrevImage} className="p-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded-lg text-subtext dark:text-zinc-400 transition-colors">
-                                    <ChevronLeft size={18} />
-                                </button>
-
-                                <div className="flex items-center text-sm font-bold text-Text dark:text-Dark_Text px-2 gap-1">
-                                    <input
-                                        type="number"
-                                        min={1}
-                                        max={project.images.length}
-                                        value={manualPage}
-                                        onChange={handlePageInput}
-                                        className="w-8 bg-transparent text-center focus:outline-none appearance-none hover:text-power transition-colors"
-                                    />
-                                    <span className="opacity-40 font-normal">/ {project.images.length}</span>
+                        {project.images.length > 0 && (
+                            <div className="flex justify-center items-center gap-3 py-1 md:p-3 bg-Main_BG dark:bg-Dark_Main_BG rounded-xl border border-BG_light dark:border-Dark_BG_light h-fit">
+                                <button onClick={() => setIsPlaying(!isPlaying)} className={`cursor-pointer size-10 rounded-xl flex items-center justify-center border transition-all ${isPlaying ? 'bg-power text-black border-power' : 'bg-BG_light dark:bg-black/20 border-BG_light dark:border-white/10 text-Text dark:text-Dark_Text'}`}>{isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-0.5" />}</button>
+                                <div className="h-10 flex items-center gap-1 bg-BG_light dark:bg-black/20 px-2 rounded-xl border border-BG_light dark:border-white/10">
+                                    <button onClick={handlePrevImage} className="p-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded-lg text-subtext dark:text-zinc-400"><ChevronLeft size={18} /></button>
+                                    <div className="flex items-center text-sm font-bold text-Text dark:text-Dark_Text px-2 gap-1"><input type="number" min={1} max={project.images.length} value={manualPage} onChange={handlePageInput} className="w-8 bg-transparent text-center focus:outline-none appearance-none hover:text-power transition-colors" /><span className="opacity-40 font-normal">/ {project.images.length}</span></div>
+                                    <button onClick={handleNextImage} className="p-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded-lg text-subtext dark:text-zinc-400"><ChevronRight size={18} /></button>
                                 </div>
-
-                                <button onClick={handleNextImage} className="p-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded-lg text-subtext dark:text-zinc-400 transition-colors">
-                                    <ChevronRight size={18} />
-                                </button>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
 
-                {/* RIGHT: OBJECT SIDEBAR (Span 3) */}
+                {/* RIGHT: OBJECT SIDEBAR */}
                 <div className="lg:col-span-3 bg-Main_BG dark:bg-Dark_Main_BG rounded-xl border-2 border-BG_light dark:border-Dark_BG_light p-6 flex flex-col h-[500px] lg:h-full overflow-hidden">
-
-                    {/* Header */}
                     <div className="flex items-center justify-between mb-6 shrink-0">
                         <div>
                             <h3 className="text-xl font-bold text-Text dark:text-Dark_Text">Object Detected</h3>
-                            <p className="text-sm text-subtext dark:text-zinc-500 mt-1">Found {detectedObjects.length} object</p>
+                            <p className="text-sm text-subtext dark:text-zinc-500 mt-1">Found {filteredObjects.length} object</p>
                         </div>
                         <Layers size={20} className="text-subtext dark:text-zinc-600" />
                     </div>
-
-                    {/* Object List */}
                     <div className="flex-1 overflow-y-auto custom-scrollbar -mr-2 pr-2 space-y-3">
-                        {detectedObjects.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-40 text-zinc-500 gap-2">
-                                <Scan size={32} opacity={0.5} />
-                                <span className="text-xs">No objects detected</span>
-                            </div>
+                        {filteredObjects.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-40 text-zinc-500 gap-2"><Scan size={32} opacity={0.5} /><span className="text-xs">{detectedObjects.length > 0 ? "No result found" : "No objects detected (Run AI first)"}</span></div>
                         ) : (
-                            detectedObjects.map((obj) => {
+                            filteredObjects.map((obj) => {
                                 const isSelected = selectedObjectId === obj.id;
                                 return (
-                                    <div
-                                        key={obj.id}
-                                        onClick={() => setSelectedObjectId(obj.id)}
-                                        className={`
-                                            relative p-4 rounded-2xl border transition-all cursor-pointer
-                                            ${isSelected 
-                                                ? 'bg-BG_light dark:bg-Dark_BG_light border-primary dark:border-Dark_primary' 
-                                                : 'bg-transparent border border-black/5 dark:border-white/5 hover:bg-black/5 dark:hover:bg-white/5'
-                                            }
-                                        `}
-                                    >
+                                    <div key={obj.id} onClick={() => handleObjectToggle(obj.id)} className={`relative p-4 rounded-2xl border transition-all cursor-pointer ${isSelected ? 'bg-BG_light dark:bg-Dark_BG_light border-primary dark:border-Dark_primary' : 'bg-transparent border-black/5 dark:border-white/5 hover:bg-black/5 dark:hover:bg-white/5'}`}>
                                         <div className="flex justify-between items-start">
-
-                                            {/* Left: Icon & Info */}
                                             <div className="flex gap-3">
-                                                <div className={`mt-0.5 ${isSelected ? 'text-Text dark:text-white' : 'text-subtext dark:text-zinc-500'}`}>
-                                                    <User size={18} />
-                                                </div>
-
-                                                <div>
-                                                    <p className={`text-sm font-bold mb-1 ${isSelected ? 'text-Text dark:text-white' : 'text-subtext dark:text-zinc-400'}`}>
-                                                        {obj.label}
-                                                    </p>
-                                                    <p className={`text-[10px] font-medium ${obj.confidence > 90 ? 'text-green-600 dark:text-green-500' : 'text-yellow-600 dark:text-yellow-500'}`}>
-                                                        {obj.confidence}% Confidence
-                                                    </p>
-                                                </div>
+                                                <div className={`mt-0.5 ${isSelected ? 'text-Text dark:text-white' : 'text-subtext dark:text-zinc-500'}`}><User size={18} /></div>
+                                                <div><p className={`text-sm font-bold mb-1 ${isSelected ? 'text-Text dark:text-white' : 'text-subtext dark:text-zinc-400'}`}>{obj.label}</p><p className={`text-[10px] font-medium ${obj.confidence > 90 ? 'text-green-600 dark:text-green-500' : 'text-yellow-600 dark:text-yellow-500'}`}>{obj.confidence}% Confidence</p></div>
                                             </div>
-
-                                            {/* Right: Distance */}
-                                            <div className="text-right">
-                                                <p className="text-xs font-bold text-secondary dark:text-Dark_secondary">{obj.distance}m</p>
-                                                <p className="text-[10px] text-subtext dark:text-zinc-600">Distance</p>
-                                            </div>
+                                            <div className="text-right"><p className="text-xs font-bold text-secondary dark:text-Dark_secondary">{obj.distance}m</p><p className="text-[10px] text-subtext dark:text-zinc-600">Distance</p></div>
                                         </div>
                                     </div>
                                 );
@@ -314,14 +306,9 @@ const ProjectDetailPage = ({ params }: { params: { id: string } }) => {
                         )}
                     </div>
                 </div>
-
             </div>
 
-            <ProjectUploadModal 
-                isOpen={isUploadModalOpen} 
-                onClose={() => setIsUploadModalOpen(false)} 
-                mode="add"
-            />
+            <ProjectUploadModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} mode="add" projectId={id} onSuccess={refreshProject} currentInputType={project.inputType} />
         </div>
     );
 };

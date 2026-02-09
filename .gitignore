@@ -18,3 +18,7 @@ build/
 # --- Database & Storage Volumes ---
 postgre_data/
 minio_data/
+
+*.pt
+*.pth
+backend/app/checkpoints/

@@ -2,21 +2,18 @@
 
 import React, { useEffect, useState } from 'react';
 import { CircleX, Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import Cookies from 'js-cookie';
+import { useAuth } from '@/hooks/useAuth';
 
 interface AuthModalProps {
     isOpen: boolean;
     onClose: () => void;
     initialMode: 'login' | 'signup';
-    onSwitchMode: (mode: 'login' | 'signup') => void;
+    onSwitchMode?: (mode: 'login' | 'signup') => void;
 }
 
-const AuthModal = ({ isOpen, onClose, initialMode}: AuthModalProps) => {
-    const router = useRouter();
+const AuthModal = ({ isOpen, onClose, initialMode }: AuthModalProps) => {
+    const { login, register } = useAuth();
     const [mode, setMode] = useState(initialMode);
-
-    // 1. State สำหรับเก็บข้อมูลฟอร์ม
     const [formData, setFormData] = useState({
         username: '',
         email: '',
@@ -24,74 +21,40 @@ const AuthModal = ({ isOpen, onClose, initialMode}: AuthModalProps) => {
         confirmPassword: ''
     });
 
-    // 2. State สำหรับสถานะ Loading และ Error
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
     useEffect(() => {
-        setMode(initialMode);
-        setError('');
-        setFormData({ username: '', email: '', password: '', confirmPassword: '' });
-    }, [initialMode]);
+        if(isOpen) {
+             setMode(initialMode);
+             setError('');
+             setFormData({ username: '', email: '', password: '', confirmPassword: '' });
+        }
+    }, [initialMode, isOpen]);
 
     if (!isOpen) return null;
 
     const isLogin = mode === 'login';
 
-    // 3. ฟังก์ชันจับการพิมพ์
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    // 4. ฟังก์ชัน Submit (หัวใจสำคัญ)
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setIsLoading(true);
 
-        const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
         try {
             if (isLogin) {
-                // --- LOGIC LOGIN ---
-                const res = await fetch(`${API_URL}/api/v1/users/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: formData.email,
-                        password: formData.password
-                    }),
-                });
-
-                const data = await res.json();
-
-                if (!res.ok) throw new Error(data.detail || 'Login failed');
-
-                // บันทึก Token ลง Cookie (อายุ 1 วัน)
-                Cookies.set('token', data.access_token, { expires: 1 });
-
-                // ปิด Modal และไปหน้า Dashboard
+                await login(formData.email, formData.password);
                 onClose();
-                router.push('/dashboard');
             } else {
-                // --- LOGIC SIGNUP ---
                 if (formData.password !== formData.confirmPassword) {
                     throw new Error("Passwords do not match!");
                 }
 
-                const res = await fetch(`${API_URL}/api/v1/users/register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        username: formData.username,
-                        email: formData.email,
-                        password: formData.password
-                    }),
-                });
-
-                const data = await res.json();
-
-                if (!res.ok) throw new Error(data.detail || 'Registration failed');
+                await register(formData.username, formData.email, formData.password);
 
                 alert('Registration Successful! Please Login.');
                 setMode('login');
@@ -108,7 +71,6 @@ const AuthModal = ({ isOpen, onClose, initialMode}: AuthModalProps) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 font-space-grotesk">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity" onClick={onClose}/>
 
-            {/* Modal Content */}
             <div className="relative w-full max-w-md bg-Main_BG dark:bg-Dark_Main_BG border border-BG_light dark:border-Dark_BG_light rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                 <div className="p-8 pt-10">
                     <div className="flex justify-between items-center mb-6">
@@ -127,7 +89,6 @@ const AuthModal = ({ isOpen, onClose, initialMode}: AuthModalProps) => {
                         </div>
                     )}
 
-                    {/* From Input */}
                     <form className="space-y-4" onSubmit={handleSubmit}>
                         {!isLogin && (
                             <div>

@@ -3,17 +3,15 @@
 import React, { useState } from "react";
 import Navbar_landing from "@/components/menu/Navbar_landing";
 import MobileMenu_landing from "@/components/menu/MobileMenu_landing";
-import AuthModal from "@/components/menu/AuthModal"; // Your existing modal
-import { AuthProvider } from "@/components/landing/AuthContext"; // Import the bridge
+import AuthModal from "@/components/menu/AuthModal";
+import { AuthProvider } from "@/components/landing/AuthContext";
 
 export default function ClientLayoutWrapper_landing({ children }: { children: React.ReactNode; }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    // Auth State
     const [isAuthOpen, setIsAuthOpen] = useState(false);
     const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
-    // These are the functions we send across the bridge
     const openLogin = () => {
         setAuthMode('login');
         setIsAuthOpen(true);
@@ -27,10 +25,8 @@ export default function ClientLayoutWrapper_landing({ children }: { children: Re
     };
 
     return (
-        // Wrap everything in AuthProvider
         <AuthProvider value={{ openLogin, openSignup }}>
 
-            {/* Your Existing Modal */}
             <AuthModal
                 isOpen={isAuthOpen}
                 onClose={() => setIsAuthOpen(false)}

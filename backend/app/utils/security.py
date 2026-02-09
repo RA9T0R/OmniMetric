@@ -4,7 +4,6 @@ from jose import jwt
 from passlib.context import CryptContext
 from app.config import settings
 
-# กำหนดว่าเราจะใช้ bcrypt ในการเข้ารหัส
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(password: str) -> str:
@@ -21,9 +20,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     else:
         expire = datetime.utcnow() + timedelta(minutes=15)
 
-    # ใส่ข้อมูลวันหมดอายุลงไปใน Token
     to_encode.update({"exp": expire})
 
-    # สร้าง Token เข้ารหัสด้วย Secret Key ของเรา
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
