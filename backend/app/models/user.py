@@ -41,6 +41,7 @@ class Transaction(Base):
     amount = Column(Numeric(10, 2), nullable=False)
     type = Column(String(20), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    payment_id = Column(String(255), unique=True, nullable=True)
 
     # User (Many-to-One)
     user = relationship("User", back_populates="transactions")

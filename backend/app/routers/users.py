@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
@@ -6,7 +8,9 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.user import User as UserModel
+from app.models.user import Transaction
 from app.schemas.user import UserCreate, UserResponse, UserLogin, Token, UserUpdate
+from app.schemas.transaction import TransactionResponse
 from app.utils.security import hash_password, verify_password, create_access_token
 from app.services.storage import upload_file,delete_file
 from app.config import settings
@@ -131,3 +135,19 @@ def upload_user_avatar(
     db.refresh(current_user)
 
     return current_user
+
+@router.get("/transactions", response_model=List[TransactionResponse])
+def get_user_transactions(
+    limit: int = 20,
+    skip: int = 0,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+):
+    transactions = db.query(Transaction)\
+        .filter(Transaction.user_id == current_user.user_id)\
+        .order_by(Transaction.created_at.desc())\
+        .limit(limit)\
+        .offset(skip)\
+        .all()
+
+    return transactions

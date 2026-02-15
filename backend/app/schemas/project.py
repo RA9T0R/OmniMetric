@@ -33,8 +33,9 @@ class ImageResponse(BaseModel):
     status: str
     upload_date: datetime
 
-    analysis_result: Optional[AnalysisResultBase] = None
+    scene_label: Optional[str]
 
+    analysis_result: Optional[AnalysisResultBase] = None
     detected_objects: List[DetectedObjectBase] = []
 
     class Config:
@@ -59,6 +60,13 @@ class ProjectResponse(BaseModel):
     model_name: str
     created_at: datetime
     images: List[ImageResponse] = []
+
+    class Config:
+        from_attributes = True
+
+class SceneSummary(BaseModel):
+    label: str
+    count: int
 
     class Config:
         from_attributes = True

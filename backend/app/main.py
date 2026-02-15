@@ -10,6 +10,7 @@ from app.database import engine, Base
 from app.services.storage import ensure_bucket_public
 from app.models import user, project, analysis
 from app.routers import projects,users,analysis
+from app.routers import payments
 from app.services.model_loader import model_loader
 
 
@@ -63,6 +64,7 @@ app.add_middleware(
 app.include_router(users.router, prefix="/users", tags=["Users"])
 app.include_router(projects.router, prefix="/projects", tags=["Projects"])
 app.include_router(analysis.router, prefix="/analysis", tags=["Analysis"])
+app.include_router(payments.router, prefix="/payments", tags=["Payments"])
 
 @app.get("/")
 def root():

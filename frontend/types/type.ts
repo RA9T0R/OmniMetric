@@ -17,6 +17,14 @@ export interface UserUpdatePayload {
     new_password?: string;
 }
 
+export interface Transaction {
+    transaction_id: string;
+    amount: number;
+    type: 'purchase' | 'spend';
+    created_at: string;
+    payment_id?: string;
+}
+
 export interface Project {
     project_id: string;
     user_id: string;
@@ -85,6 +93,7 @@ export interface APIImage {
     image_id: string;
     image_url: string;
     image_name: string;
+    scene_label: string;
     upload_date: string;
     analysis_result?: {
         depth_map_visual_url?: string;
@@ -112,6 +121,7 @@ export interface ProjectImageDetail {
     url: string;
     depthUrl?: string;
     name: string;
+    sceneLabel?: string | null;
     type: string;
     uploadDate: string;
     objects: DetectedObject[];
@@ -137,6 +147,11 @@ export interface ImageViewerProps {
     selectedObjectId: string | null;
     onObjectClick: (id: string) => void;
     onPixelSelect: (data: { x: number; y: number }) => void;
+}
+
+export interface SceneSummary {
+    label: string;
+    count: number;
 }
 
 // ==========================================

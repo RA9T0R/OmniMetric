@@ -2,6 +2,7 @@
 from pydantic import BaseModel, EmailStr
 from uuid import UUID
 from datetime import datetime
+from decimal import Decimal
 from typing import Optional
 
 class UserBase(BaseModel):
@@ -14,7 +15,7 @@ class UserCreate(UserBase):
 class UserResponse(UserBase):
     user_id: UUID
     profile_picture_url: Optional[str] = None
-    credit_balance: float
+    credit_balance: Decimal
     created_at: datetime
 
     class Config:

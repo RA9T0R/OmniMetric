@@ -5,10 +5,12 @@ import {
     APIProjectResponse,
     MeasurePointResponse,
     MeasurePointPayload,
-    DetectedObject
+    DetectedObject,
+    SceneSummary
 } from '@/types/type';
 
 export const useProjectDetail = (projectId: string) => {
+    const [projectScenes, setProjectScenes] = useState<SceneSummary[]>([]); // State สำหรับเก็บ Scene lists
     const [project, setProject] = useState<ProjectDetail | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -76,6 +78,7 @@ export const useProjectDetail = (projectId: string) => {
                             url: img.image_url,
                             depthUrl: img.analysis_result?.depth_map_visual_url ?? undefined,
                             name: img.image_name,
+                            sceneLabel: img.scene_label || null,
                             type: data.input_type,
                             uploadDate: new Date(img.upload_date).toLocaleDateString('en-GB'),
                             analysisResult: img.analysis_result ? {
@@ -101,9 +104,29 @@ export const useProjectDetail = (projectId: string) => {
         }
     }, [API_URL, projectId]);
 
+    const fetchProjectScenes = useCallback(async () => {
+        if (!projectId) return;
+        const token = Cookies.get('token');
+        if (!token) return;
+
+        try {
+            const res = await fetch(`${API_URL}/projects/${projectId}/scenes`, { // สมมติ endpoint นี้
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (res.ok) {
+                const data: SceneSummary[] = await res.json();
+                setProjectScenes(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch project scenes", error);
+        }
+    }, [API_URL, projectId]);
+
     useEffect(() => {
         fetchProjectDetail();
-    }, [fetchProjectDetail]);
+        fetchProjectScenes();
+    }, [fetchProjectDetail, fetchProjectScenes]);
 
     const measurePoint = useCallback(async (payload: MeasurePointPayload): Promise<MeasurePointResponse | null> => {
         const token = Cookies.get('token');
@@ -127,7 +150,6 @@ export const useProjectDetail = (projectId: string) => {
             }
 
             return await res.json();
-
         } catch (error) {
             console.error("Measure Point Error:", error);
             throw error;
@@ -136,9 +158,10 @@ export const useProjectDetail = (projectId: string) => {
 
     return {
         project,
+        projectScenes,
         isLoading,
         error,
-        refreshProject: fetchProjectDetail,
+        refreshProject: () => { fetchProjectDetail(); fetchProjectScenes(); },
         measurePoint
     };
 };

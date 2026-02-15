@@ -12,18 +12,22 @@ from app.services.ai_service import (
     process_image_background_task,
     get_image_from_minio,
     get_depth_from_saved_npy,
-    execute_sniper_inference
+    execute_sniper_inference_pro,
+    execute_sniper_inference_fast,
 )
 from app.services.model_loader import model_loader
 from app.config import settings
 
 router = APIRouter()
 
+
 class MeasurePointRequest(BaseModel):
     image_id: UUID
     x: int
     y: int
 
+
+COST_MEASURE_360 = 2
 
 @router.post("/images/{image_id}/process")
 async def trigger_image_analysis(
@@ -59,14 +63,35 @@ async def trigger_image_analysis(
 async def measure_point_manual(
         req: MeasurePointRequest,
         db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
 ):
     image = db.query(Image).filter(Image.image_id == req.image_id).first()
     if not image:
         raise HTTPException(status_code=404, detail="Image not found")
+    if image.project.user_id != current_user.user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
 
     input_type = image.project.input_type
 
-    # Normal Image
+    if input_type == '360_degree':
+        try:
+            user_to_charge = db.query(User).filter(User.user_id == current_user.user_id).with_for_update().first()
+
+            if user_to_charge.credit_balance < COST_MEASURE_360:
+                raise HTTPException(
+                    status_code=402,
+                    detail=f"Insufficient credit for AI Measurement. Required: {COST_MEASURE_360}, Balance: {user_to_charge.credit_balance}"
+                )
+
+            user_to_charge.credit_balance -= COST_MEASURE_360
+            db.commit()
+        except HTTPException as he:
+            db.rollback()
+            raise he
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail="Transaction failed")
+
     if input_type == 'Normal':
         if not image.analysis_result or not image.analysis_result.raw_depth_file_url:
             raise HTTPException(status_code=400, detail="Depth data not found. Please process image first.")
@@ -91,7 +116,6 @@ async def measure_point_manual(
 
         return {"distance": distance, "unit": "meters"}
 
-    # Panorama
     elif input_type == '360_degree':
         original_img = get_image_from_minio(image.image_url)
         if original_img is None:
@@ -105,11 +129,20 @@ async def measure_point_manual(
         print(f"Manual Measure: Pixel({cx},{cy}) -> Yaw:{yaw_deg:.2f}, Pitch:{pitch_deg:.2f}")
 
         try:
-            dist = execute_sniper_inference(original_img, yaw_deg, pitch_deg, model_loader.device)
+            model_name = image.project.model_name
+
+            if model_name == "ProTypeModel":
+                dist = execute_sniper_inference_pro(original_img, yaw_deg, pitch_deg, model_loader.device)
+            else:
+                dist = execute_sniper_inference_fast(original_img, yaw_deg, pitch_deg, {}, model_loader.device)
+
             return {"distance": dist, "unit": "meters"}
+
         except Exception as e:
             print(f"Sniper Error: {e}")
             raise HTTPException(status_code=500, detail=str(e))
-        else:
-            raise HTTPException(status_code=400, detail="Unknown Project Type")
+
+    else:
+        raise HTTPException(status_code=400, detail="Unknown Project Type")
+
     return None

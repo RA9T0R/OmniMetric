@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-    ChevronLeft, Trash2, Plus, Search, ChevronRight, Layers, Play, Pause, Pointer, User, Scan, Loader2
+    ChevronLeft, Trash2, Plus, Search, ChevronRight, Layers, Play, Pause, Pointer, User, Scan, Loader2, MapPin
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
@@ -14,6 +14,7 @@ import MeasurementResultPopup from '@/components/MeasurementResultPopup';
 
 import { useProjectDetail } from '@/hooks/useProjectDetail';
 import { useProjects } from '@/hooks/useProjects';
+import { useAuth } from '@/hooks/useAuth';
 
 import { PixelSelectionData } from '@/types/type';
 
@@ -23,8 +24,9 @@ const ProjectDetailPage = () => {
     const id = params.id as string;
     const router = useRouter();
 
-    const { project, isLoading, error, refreshProject, measurePoint } = useProjectDetail(id);
+    const { project, projectScenes, isLoading, error, refreshProject, measurePoint } = useProjectDetail(id);
     const { deleteProject } = useProjects();
+    const { refreshUser } = useAuth();
 
     // 2. States
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -45,37 +47,56 @@ const ProjectDetailPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isMeasuring, setIsMeasuring] = useState(false);
 
+    // ✅ New: State สำหรับ Filter Scene
+    const [selectedScene, setSelectedScene] = useState<string | null>(null);
+
     // 3. Computed Values
-    const currentImage = project?.images[currentImageIndex];
+
+    // ✅ Step A: Filter รูปภาพก่อน (ตาม Scene ที่เลือก)
+    const displayedImages = project?.images.filter(img =>
+        selectedScene ? img.sceneLabel === selectedScene : true
+    ) || [];
+
+    // ✅ Step B: คำนวณ Index ให้ปลอดภัย (กัน Error กรณีเปลี่ยน Filter แล้ว Index เกิน)
+    const safeImageIndex = Math.min(currentImageIndex, Math.max(0, displayedImages.length - 1));
+    const currentImage = displayedImages[safeImageIndex];
+
     const detectedObjects = currentImage?.objects || [];
 
     const filteredObjects = detectedObjects.filter(obj =>
         obj.label.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // Reset page & search & popups เมื่อเปลี่ยนรูป
+    // Reset page & search & popups เมื่อเปลี่ยนรูป หรือ เปลี่ยน Filter
     useEffect(() => {
-        if (manualPage !== currentImageIndex + 1) {
-            setManualPage(currentImageIndex + 1);
+        // Sync manualPage กับ safeIndex
+        if (manualPage !== safeImageIndex + 1) {
+            setManualPage(safeImageIndex + 1);
         }
+
+        // ถ้า Filter เปลี่ยน แล้ว Index ปัจจุบันมันเกินจำนวนรูปใหม่ ให้รีเซ็ตกลับไปรูปแรก
+        if (currentImageIndex >= displayedImages.length && displayedImages.length > 0) {
+            setCurrentImageIndex(0);
+        }
+
         setSelectedObjectId(null);
         setSearchTerm('');
         setIsPopupOpen(false);
         setSelectionData(null);
-        setIsResultPopupOpen(false); 
+        setIsResultPopupOpen(false);
         setResultData(null);
 
-    }, [currentImageIndex, manualPage]);
+    }, [safeImageIndex, selectedScene, displayedImages.length]); // Dependencies updated
 
     useEffect(() => {
         let interval: NodeJS.Timeout;
-        if (isPlaying && project && project.images.length > 0) {
+        if (isPlaying && displayedImages.length > 0) { // ใช้ displayedImages แทน project.images
             interval = setInterval(() => {
-                setCurrentImageIndex((prev) => (prev + 1) % project.images.length);
-            }, 500);
+                setCurrentImageIndex((prev) => (prev + 1) % displayedImages.length);
+            }, 1000);
         }
         return () => clearInterval(interval);
-    }, [isPlaying, project]);
+    }, [isPlaying, displayedImages.length]);
 
     const handleDelete = async () => {
         const confirmed = window.confirm(`Are you sure you want to delete project "${project?.title}"? This action cannot be undone.`);
@@ -97,13 +118,14 @@ const ProjectDetailPage = () => {
         }
     };
 
-    const handleNextImage = () => { if (!project) return; setCurrentImageIndex((prev) => (prev + 1) % project.images.length); };
-    const handlePrevImage = () => { if (!project) return; setCurrentImageIndex((prev) => (prev === 0 ? project.images.length - 1 : prev - 1)); };
+    // ปรับ Logic ปุ่ม Next/Prev ให้ใช้ displayedImages
+    const handleNextImage = () => { if (displayedImages.length === 0) return; setCurrentImageIndex((prev) => (prev + 1) % displayedImages.length); };
+    const handlePrevImage = () => { if (displayedImages.length === 0) return; setCurrentImageIndex((prev) => (prev === 0 ? displayedImages.length - 1 : prev - 1)); };
 
     const handlePageInput = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = parseInt(e.target.value);
         setManualPage(val);
-        if (project && !isNaN(val) && val >= 1 && val <= project.images.length) {
+        if (displayedImages.length > 0 && !isNaN(val) && val >= 1 && val <= displayedImages.length) {
             setCurrentImageIndex(val - 1);
         }
     };
@@ -134,6 +156,9 @@ const ProjectDetailPage = () => {
                     y: selectionData.y
                 });
                 setIsResultPopupOpen(true);
+                if(currentImage.type === '360_degree') {
+                    await refreshUser();
+                }
             }
 
         } catch (error: any) {
@@ -186,7 +211,7 @@ const ProjectDetailPage = () => {
                 {/* LEFT: IMAGE VIEWER */}
                 <div className="lg:col-span-11 flex flex-col overflow-hidden gap-4">
                     <div className="relative rounded-xl border-2 border-BG_light dark:border-Dark_BG_light h-[500px] lg:h-auto lg:flex-1 overflow-hidden flex items-center justify-center bg-zinc-900">
-                        {project.images.length > 0 && currentImage ? (
+                        {displayedImages.length > 0 && currentImage ? (
                             <>
                                 {currentImage.type === '360_degree' ? (
                                     <PanoramaImageViewer
@@ -222,9 +247,23 @@ const ProjectDetailPage = () => {
                                         <Pointer size={18} />
                                     </button>
                                 </div>
+
+                                {/* Scene Label Badge (Optional: เพื่อบอกว่ารูปนี้คืออะไร) */}
+                                {currentImage.sceneLabel && (
+                                    <div className="absolute top-4 left-4 z-30 animate-in fade-in zoom-in">
+                                         <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 shadow-lg">
+                                            <MapPin size={12} className="text-power" />
+                                            <span className="text-xs font-bold text-white capitalize">{currentImage.sceneLabel}</span>
+                                        </div>
+                                    </div>
+                                )}
                             </>
                         ) : (
-                            <div className="text-center text-subtext"><Scan size={48} className="mx-auto mb-2 opacity-50"/><p>No images in this project.</p><button onClick={() => setIsUploadModalOpen(true)} className="text-power hover:underline mt-2">Upload Now</button></div>
+                            <div className="text-center text-subtext">
+                                <Scan size={48} className="mx-auto mb-2 opacity-50"/>
+                                <p>{selectedScene ? `No images found in "${selectedScene}"` : "No images in this project."}</p>
+                                <button onClick={() => setIsUploadModalOpen(true)} className="text-power hover:underline mt-2">Upload Now</button>
+                            </div>
                         )}
 
                         {/* ✅ Popup 1: Confirm Selection */}
@@ -232,6 +271,7 @@ const ProjectDetailPage = () => {
                             isOpen={isPopupOpen}
                             onClose={() => setIsPopupOpen(false)}
                             onProcess={handleProcessAI}
+                            type={currentImage.type}
                             data={selectionData}
                         />
 
@@ -250,12 +290,62 @@ const ProjectDetailPage = () => {
                         )}
                     </div>
 
-                    <div className="flex flex-col md:flex-row justify-between gap-4 shrink-0">
-                        <div className="flex flex-col justify-between gap-2">
-                            <div className="relative max-w-96">
-                                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-subtext dark:text-zinc-500" />
-                                <input type="text" placeholder="Search object..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full lg:w-96 bg-BG_light dark:bg-black/20 border border-BG_light dark:border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-sm text-Text dark:text-Dark_Text focus:outline-none focus:ring-1 focus:ring-power dark:focus:ring-Dark_power transition-all" />
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4 shrink-0">
+
+                        {/* LEFT GROUP: Search + Filter + Info */}
+                        {/* ✅ แก้ไข 1: ใช้ flex-1 min-w-0 เพื่อให้กินพื้นที่แค่ที่เหลือ ไม่ไปดัน Pagination */}
+                        <div className="flex flex-col justify-between gap-2 flex-1 min-w-0 w-full md:w-auto">
+
+                            {/* Wrapper for Search + Scene Filter */}
+                            <div className="flex flex-col xl:flex-row items-start xl:items-center gap-3">
+
+                                {/* 1. Search Box */}
+                                <div className="relative w-full lg:w-80 xl:w-96 shrink-0">
+                                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-subtext dark:text-zinc-500" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search object..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="w-full bg-BG_light dark:bg-black/20 border border-BG_light dark:border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-sm text-Text dark:text-Dark_Text focus:outline-none focus:ring-1 focus:ring-power dark:focus:ring-Dark_power transition-all"
+                                    />
+                                </div>
+
+                                {/* 2. ✅ Scene Filter (Auxiliary Style) */}
+                                {projectScenes && projectScenes.length > 0 && (
+                                    <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar min-w-0 max-w-full">
+
+                                        {/* Divider (Show only on Desktop) */}
+                                        <div className="bg-black/10 dark:bg-white/10 mx-1 shrink-0 hidden xl:block"></div>
+
+                                        <button
+                                            onClick={() => { setSelectedScene(null); setCurrentImageIndex(0); }}
+                                            className={`px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all border whitespace-nowrap shrink-0 ${
+                                                selectedScene === null
+                                                    ? 'bg-power text-black border-power'
+                                                    : 'bg-transparent text-subtext dark:text-zinc-500 border-transparent hover:bg-black/5 dark:hover:bg-white/5 hover:text-Text dark:hover:text-zinc-300'
+                                            }`}
+                                        >
+                                            All ({project.images.length})
+                                        </button>
+
+                                        {projectScenes.map((scene) => (
+                                            <button
+                                                key={scene.label}
+                                                onClick={() => { setSelectedScene(scene.label); setCurrentImageIndex(0); }}
+                                                className={`px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all border whitespace-nowrap shrink-0 ${
+                                                    selectedScene === scene.label
+                                                        ? 'bg-power text-black border-power'
+                                                        : 'bg-transparent text-subtext dark:text-zinc-500 border-transparent hover:bg-black/5 dark:hover:bg-white/5 hover:text-Text dark:hover:text-zinc-300'
+                                                }`}
+                                            >
+                                                {scene.label} ({scene.count})
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
+
                             <div className="text-xs text-subtext dark:text-zinc-500 font-mono flex items-center gap-2">
                                 <span>Model : <span className="text-Text dark:text-zinc-300 font-bold">{project.modelType}</span></span>
                                 <span className="w-px h-3 bg-zinc-700"></span>
@@ -263,12 +353,18 @@ const ProjectDetailPage = () => {
                             </div>
                         </div>
 
-                        {project.images.length > 0 && (
-                            <div className="flex justify-center items-center gap-3 py-1 md:p-3 bg-Main_BG dark:bg-Dark_Main_BG rounded-xl border border-BG_light dark:border-Dark_BG_light h-fit">
-                                <button onClick={() => setIsPlaying(!isPlaying)} className={`cursor-pointer size-10 rounded-xl flex items-center justify-center border transition-all ${isPlaying ? 'bg-power text-black border-power' : 'bg-BG_light dark:bg-black/20 border-BG_light dark:border-white/10 text-Text dark:text-Dark_Text'}`}>{isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-0.5" />}</button>
+                        {/* Pagination (Fixed Right) */}
+                        {displayedImages.length > 0 && (
+                            <div className="w-full md:w-auto flex justify-center items-center gap-3 py-1 md:p-3 bg-Main_BG dark:bg-Dark_Main_BG rounded-xl border border-BG_light dark:border-Dark_BG_light h-fit shrink-0">
+                                <button onClick={() => setIsPlaying(!isPlaying)} className={`cursor-pointer size-10 rounded-xl flex items-center justify-center border transition-all ${isPlaying ? 'bg-power text-black border-power' : 'bg-BG_light dark:bg-black/20 border-BG_light dark:border-white/10 text-Text dark:text-Dark_Text'}`}>
+                                    {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-0.5" />}
+                                </button>
                                 <div className="h-10 flex items-center gap-1 bg-BG_light dark:bg-black/20 px-2 rounded-xl border border-BG_light dark:border-white/10">
                                     <button onClick={handlePrevImage} className="p-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded-lg text-subtext dark:text-zinc-400"><ChevronLeft size={18} /></button>
-                                    <div className="flex items-center text-sm font-bold text-Text dark:text-Dark_Text px-2 gap-1"><input type="number" min={1} max={project.images.length} value={manualPage} onChange={handlePageInput} className="w-8 bg-transparent text-center focus:outline-none appearance-none hover:text-power transition-colors" /><span className="opacity-40 font-normal">/ {project.images.length}</span></div>
+                                    <div className="flex items-center text-sm font-bold text-Text dark:text-Dark_Text px-2 gap-1">
+                                        <input type="number" min={1} max={displayedImages.length} value={manualPage} onChange={handlePageInput} className="w-8 bg-transparent text-center focus:outline-none appearance-none hover:text-power transition-colors" />
+                                        <span className="opacity-40 font-normal">/ {displayedImages.length}</span>
+                                    </div>
                                     <button onClick={handleNextImage} className="p-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded-lg text-subtext dark:text-zinc-400"><ChevronRight size={18} /></button>
                                 </div>
                             </div>
@@ -276,7 +372,7 @@ const ProjectDetailPage = () => {
                     </div>
                 </div>
 
-                {/* RIGHT: OBJECT SIDEBAR */}
+                {/* RIGHT: OBJECT SIDEBAR (คงเดิม 100% ตามคำขอ) */}
                 <div className="lg:col-span-3 bg-Main_BG dark:bg-Dark_Main_BG rounded-xl border-2 border-BG_light dark:border-Dark_BG_light p-6 flex flex-col h-[500px] lg:h-full overflow-hidden">
                     <div className="flex items-center justify-between mb-6 shrink-0">
                         <div>

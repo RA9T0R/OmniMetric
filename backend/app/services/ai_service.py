@@ -9,8 +9,8 @@ import requests
 from uuid import UUID
 import os
 import time
-import asyncio
 import math
+from torch.nn import functional as F
 
 from app.models.project import Image as DBImage
 from app.services.model_loader import model_loader
@@ -21,6 +21,7 @@ from app.database import SessionLocal
 
 import depth_pro
 
+# --- Helpers ---
 def generate_high_res_heatmap(depth_np, original_size=None):
     depth_min = depth_np.min()
     depth_max = depth_np.max()
@@ -32,7 +33,6 @@ def generate_high_res_heatmap(depth_np, original_size=None):
 
     depth_uint8 = (depth_norm * 255).astype(np.uint8)
     depth_uint8_inv = 255 - depth_uint8
-
     heatmap = cv2.applyColorMap(depth_uint8_inv, cv2.COLORMAP_INFERNO)
 
     if original_size:
@@ -61,7 +61,7 @@ def upload_bytes_to_minio(data_bytes: bytes, folder: str, filename: str, content
 
 def get_image_from_minio(image_url: str):
     try:
-        download_url = image_url.replace("localhost", "minio")
+        download_url = image_url.replace("localhost", "minio")  # Adjust if needed
         resp = requests.get(download_url)
         resp.raise_for_status()
         arr = np.asarray(bytearray(resp.content), dtype=np.uint8)
@@ -94,8 +94,57 @@ def filter_overlapping_objects(candidates, img_width, threshold_ratio=0.03):
             keep.append(current)
     return keep
 
+def get_depth_from_saved_npy(bucket_name, object_key, x, y, orig_w, orig_h):
+    try:
+        response = storage_client.get_object(Bucket=bucket_name, Key=object_key)
+        content = response['Body'].read()
+        with io.BytesIO(content) as f:
+            depth_np = np.load(f)
 
-def execute_sniper_inference(original_img, yaw_deg, pitch_deg, device):
+        d_h, d_w = depth_np.shape
+        scale_x = d_w / orig_w
+        scale_y = d_h / orig_h
+
+        dx = int(x * scale_x)
+        dy = int(y * scale_y)
+        dx = min(max(0, dx), d_w - 1)
+        dy = min(max(0, dy), d_h - 1)
+
+        dist = depth_np[dy, dx]
+        return round(float(dist), 2)
+    except Exception as e:
+        print(f"Error reading NPY: {e}")
+        return None
+
+
+
+def estimate_metric_depth_v2(raw_depth_val, detected_label=None, box_height_px=None, img_height_px=None):
+    inv_depth = 1.0 / (raw_depth_val + 1e-4)
+
+    scale_factor = 25.0
+
+    if detected_label and box_height_px and img_height_px:
+        focal_est = 0.8 * img_height_px
+        real_height = 1.7
+
+        if detected_label in ['person', 'man', 'woman']:
+            real_height = 1.7
+        elif detected_label in ['car', 'truck', 'bus', 'vehicle']:
+            real_height = 1.5
+        elif detected_label in ['chair']:
+            real_height = 1.0
+        elif detected_label in ['table', 'desk']:
+            real_height = 0.75
+
+        geom_dist = (focal_est * real_height) / box_height_px
+
+        calc_scale = geom_dist / inv_depth
+        scale_factor = 0.7 * calc_scale + 0.3 * 25.0
+
+    return round(float(inv_depth * scale_factor), 2)
+
+
+def execute_sniper_inference_pro(original_img, yaw_deg, pitch_deg, device):
     target_fov = 80
     sniper_size = 512
 
@@ -105,7 +154,6 @@ def execute_sniper_inference(original_img, yaw_deg, pitch_deg, device):
     )
 
     f_px_crop_val = (sniper_size / 2.0) / np.tan(np.deg2rad(target_fov) / 2.0)
-
     d_model, d_transform = model_loader.get_depth_model("ProTypeModel")
 
     crop_pil = Image.fromarray(cv2.cvtColor(perspective_crop, cv2.COLOR_BGR2RGB))
@@ -123,31 +171,29 @@ def execute_sniper_inference(original_img, yaw_deg, pitch_deg, device):
     return round(float(metric_dist), 2)
 
 
-def get_depth_from_saved_npy(bucket_name, object_key, x, y, orig_w, orig_h):
-    try:
-        response = storage_client.get_object(Bucket=bucket_name, Key=object_key)
-        content = response['Body'].read()
+def execute_sniper_inference_fast(original_img, yaw_deg, pitch_deg, obj_info, device):
+    target_fov = 80
+    sniper_size = 512
 
-        with io.BytesIO(content) as f:
-            depth_np = np.load(f)
+    perspective_crop = py360convert.e2p(
+        original_img, fov_deg=target_fov, u_deg=yaw_deg, v_deg=pitch_deg,
+        out_hw=(sniper_size, sniper_size), in_rot_deg=0, mode='bilinear'
+    )
 
-        d_h, d_w = depth_np.shape
-        scale_x = d_w / orig_w
-        scale_y = d_h / orig_h
+    d_model, _ = model_loader.get_depth_model("FastTypeModel")
+    depth_crop = d_model.infer_image(perspective_crop)
 
-        dx = int(x * scale_x)
-        dy = int(y * scale_y)
+    center_c = sniper_size // 2
+    roi = depth_crop[center_c - 2:center_c + 2, center_c - 2:center_c + 2]
+    raw_val = np.median(roi)
 
-        dx = min(max(0, dx), d_w - 1)
-        dy = min(max(0, dy), d_h - 1)
+    label = obj_info.get('label')
 
-        dist = depth_np[dy, dx]
-        return round(float(dist), 2)
-    except Exception as e:
-        print(f"Error reading NPY: {e}")
-        return None
+    metric_dist = estimate_metric_depth_v2(raw_val, detected_label=label, box_height_px=None, img_height_px=None)
+    return metric_dist
 
 
+# --- Main Background Task ---
 def process_image_background_task(image_id: UUID):
     print(f"[AI Task] Processing Image: {image_id}")
     db = SessionLocal()
@@ -163,17 +209,57 @@ def process_image_background_task(image_id: UUID):
 
         for attempt in range(max_retries):
             original_img = get_image_from_minio(db_image.image_url)
-
             if original_img is not None and hasattr(original_img, 'shape') and original_img.size > 0:
                 print(f"[AI Task] Image successfully downloaded on attempt {attempt + 1}")
                 break
-
             if attempt < max_retries - 1:
                 print(f"[AI Task] Image not found in MinIO yet. Retrying in 2s... ({attempt + 1}/{max_retries})")
                 time.sleep(2)
 
         if original_img is None:
             raise ValueError(f"Image Download Failed after {max_retries} attempts for URL: {db_image.image_url}")
+
+        # -------------------------------------------------------------
+        # 1. SCENE RECOGNITION (ResNet50 - Places365)
+        # -------------------------------------------------------------
+        try:
+            print("   🔍 Identifying Scene...")
+            scene_model, scene_labels = model_loader.get_scene_model()
+            scene_transform = model_loader.get_scene_transform()
+            device = model_loader.device
+
+            if scene_model and scene_labels:
+                rgb_img = cv2.cvtColor(original_img, cv2.COLOR_BGR2RGB)
+                input_tensor = scene_transform(rgb_img).unsqueeze(0).to(device)
+
+                with torch.no_grad():
+                    logit = scene_model.forward(input_tensor)
+                    h_x = F.softmax(logit, 1).data.squeeze()
+                    probs, idx = h_x.sort(0, True)
+
+                top_5_scenes = []
+                for i in range(0, 5):
+                    top_5_scenes.append(f"{scene_labels[idx[i].item()]}: {probs[i].item():.2f}")
+                print(f"   📊 Top 5 Scenes: {', '.join(top_5_scenes)}")
+
+                top_conf = probs[0].item()
+                top_label = scene_labels[idx[0].item()]
+
+                if top_conf < 0.15:
+                    print(f"   ⚠️ Low confidence ({top_conf:.2f}). Marking as 'General'.")
+                    predicted_scene = "General"
+                else:
+                    predicted_scene = top_label.replace('_', ' ')
+
+                print(f"   ✅ Scene Detected: {predicted_scene} (Conf: {probs[0].item():.2f})")
+                db_image.scene_label = predicted_scene
+
+        except Exception as e:
+            print(f"   ⚠️ Scene Recognition Failed: {e}")
+
+        # -------------------------------------------------------------
+        # 2. YOLO & DEPTH PIPELINE
+        # -------------------------------------------------------------
 
         orig_h, orig_w = original_img.shape[:2]
         project = db_image.project
@@ -188,10 +274,9 @@ def process_image_background_task(image_id: UUID):
         raw_depth_url = None
 
         if input_type == "Normal":
-            print("Mode: Normal Image Pipeline")
+            print(f"Mode: Normal Image Pipeline ({model_name})")
 
             yolo_results = yolo(original_img, device=device, verbose=False)
-
             depth_np = None
 
             if model_name == "ProTypeModel":
@@ -199,7 +284,6 @@ def process_image_background_task(image_id: UUID):
                 if max(orig_h, orig_w) > max_dim:
                     scale = max_dim / max(orig_h, orig_w)
                     new_w, new_h = int(orig_w * scale), int(orig_h * scale)
-                    print(f"Resizing for Depth Pro: {new_w}x{new_h}")
                     resized_img = cv2.resize(original_img, (new_w, new_h))
                     _, encoded_img = cv2.imencode('.jpg', resized_img)
                     image_content = encoded_img.tobytes()
@@ -221,13 +305,60 @@ def process_image_background_task(image_id: UUID):
                     with torch.no_grad():
                         prediction = d_model.infer(d_input, f_px=f_px)
                         depth_np = prediction["depth"].squeeze().cpu().numpy()
+                        if depth_np.shape != (orig_h, orig_w):
+                            depth_np = cv2.resize(depth_np, (orig_w, orig_h), interpolation=cv2.INTER_LINEAR)
                 finally:
                     if os.path.exists(tmp_path): os.remove(tmp_path)
 
             else:
                 d_model, _ = model_loader.get_depth_model("FastTypeModel")
-                depth_np = d_model.infer_image(original_img)
+                raw_rel_depth = d_model.infer_image(original_img) # This is relative/inverse
 
+                calculated_scales = [25.0]
+
+                d_h, d_w = raw_rel_depth.shape
+                scale_x = d_w / orig_w
+                scale_y = d_h / orig_h
+
+                inv_rel_depth = 1.0 / (raw_rel_depth + 1e-4)
+
+                for result in yolo_results:
+                    boxes = result.boxes.xyxy.cpu().numpy()
+                    classes = result.boxes.cls.cpu().numpy()
+
+                    for box, cls in zip(boxes, classes):
+                        label = result.names[int(cls)]
+                        x1, y1, x2, y2 = map(int, box)
+
+                        real_height = None
+                        if label in ['person', 'man', 'woman']: real_height = 1.7
+                        elif label in ['car', 'truck', 'bus', 'vehicle']: real_height = 1.5
+                        elif label in ['chair']: real_height = 1.0
+                        elif label in ['table', 'desk']: real_height = 0.75
+
+                        if real_height:
+                            focal_est = 0.8 * orig_h
+                            box_h_px = (y2 - y1)
+                            if box_h_px < 1: box_h_px = 1
+
+                            est_dist_geometric = (focal_est * real_height) / box_h_px
+
+                            cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
+                            dx, dy = int(cx * scale_x), int(cy * scale_y)
+                            dx, dy = min(max(0, dx), d_w - 1), min(max(0, dy), d_h - 1)
+
+                            raw_val_center = inv_rel_depth[dy, dx]
+
+                            if raw_val_center > 1e-5:
+                                obj_scale = est_dist_geometric / raw_val_center
+                                calculated_scales.append(obj_scale)
+
+                final_global_scale = np.median(calculated_scales)
+                print(f"   ⚖️ Global Calibration Scale: {final_global_scale:.2f} (from {len(calculated_scales)-1} objects)")
+
+                depth_np = inv_rel_depth * final_global_scale
+
+            # --- Save & Upload ---
             buffer_npy = io.BytesIO()
             np.save(buffer_npy, depth_np)
             raw_depth_url = upload_bytes_to_minio(
@@ -272,11 +403,11 @@ def process_image_background_task(image_id: UUID):
                         "box_data": box_data, "distance": dist_val
                     })
 
+        # --- PATH B: 360 Degree Panorama ---
         elif input_type == "360_degree":
-            print("   Mode: Panorama 360 Sniper Pipeline")
+            print(f"   Mode: Panorama 360 Sniper Pipeline ({model_name})")
 
             da_model, _ = model_loader.get_depth_model("FastTypeModel")
-
             depth_vis_np = da_model.infer_image(original_img)
             vis_img = generate_high_res_heatmap(depth_vis_np, original_size=(orig_h, orig_w))
 
@@ -307,8 +438,9 @@ def process_image_background_task(image_id: UUID):
             filtered_candidates = filter_overlapping_objects(raw_candidates, orig_w, threshold_ratio=0.03)
             print(f"YOLO found {len(raw_candidates)} -> Filtered to {len(filtered_candidates)}")
 
-            model_loader.get_depth_model("ProTypeModel")
-            torch.set_num_threads(10)
+            if model_name == "ProTypeModel":
+                model_loader.get_depth_model("ProTypeModel")
+                torch.set_num_threads(10)
 
             for idx, obj in enumerate(filtered_candidates, 1):
                 x1, y1, x2, y2 = obj['box']
@@ -318,8 +450,12 @@ def process_image_background_task(image_id: UUID):
                 yaw_deg = (cx / orig_w) * 360 - 180
                 pitch_deg = -((cy / orig_h) * 180 - 90)
 
-                print(f"Sniper [{idx}/{len(filtered_candidates)}]: {label}")
-                metric_dist = execute_sniper_inference(original_img, yaw_deg, pitch_deg, device)
+                print(f"Sniper [{idx}/{len(filtered_candidates)}]: {label} ({model_name})")
+
+                if model_name == "ProTypeModel":
+                    metric_dist = execute_sniper_inference_pro(original_img, yaw_deg, pitch_deg, device)
+                else:
+                    metric_dist = execute_sniper_inference_fast(original_img, yaw_deg, pitch_deg, obj, device)
 
                 val_conf = obj['conf']
                 confidence_score = int(val_conf) if val_conf > 1.0 else int(val_conf * 100)
@@ -333,7 +469,6 @@ def process_image_background_task(image_id: UUID):
                     "box_data": box_data, "distance": metric_dist
                 })
 
-        # 4. Save Results
         save_analysis_result(
             db, image_id,
             depth_map_visual_url=depth_vis_url,
@@ -342,7 +477,6 @@ def process_image_background_task(image_id: UUID):
         )
         save_detected_objects(db, image_id, detected_objects_data)
 
-        # 5. Success
         db_image.status = "done"
         db.commit()
         print(f"Image {image_id} processed successfully.")
@@ -350,7 +484,6 @@ def process_image_background_task(image_id: UUID):
     except Exception as e:
         print(f"Processing Error: {e}")
         db.rollback()
-        # Safe fail update
         try:
             err_img = db.query(DBImage).filter(DBImage.image_id == image_id).first()
             if err_img:

@@ -1,7 +1,11 @@
+'use client';
+
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Cookies from 'js-cookie';
-import { UserProfile,UserUpdatePayload } from "@/types/type";
+import { UserProfile, UserUpdatePayload, Transaction } from "@/types/type";
+
+const AUTH_EVENT_KEY = 'auth-data-change';
 
 export const useAuth = () => {
     const [user, setUser] = useState<UserProfile | null>(null);
@@ -16,7 +20,7 @@ export const useAuth = () => {
         if (!token) {
             setUser(null);
             setLoading(false);
-            if (pathname.includes('/dashboard')) router.push('/');
+            if (pathname?.includes('/dashboard')) router.push('/');
             return;
         }
 
@@ -31,13 +35,11 @@ export const useAuth = () => {
                 const data = await res.json();
                 setUser(data);
             } else {
-                console.error("Token invalid, logging out...");
                 Cookies.remove('token');
                 setUser(null);
-                router.push('/');
             }
         } catch (error) {
-            console.error("Network Error or API Down:", error);
+            console.error("Network Error:", error);
             setUser(null);
         } finally {
             setLoading(false);
@@ -48,95 +50,123 @@ export const useAuth = () => {
         fetchUser();
     }, [fetchUser]);
 
-    const login = async (email: string, password: string): Promise<void> => {
-        try {
-            const res = await fetch(`${API_URL}/users/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
-            });
 
-            const data = await res.json();
+    useEffect(() => {
+        const handleAuthChange = () => {
+            fetchUser();
+        };
 
-            if (!res.ok) throw new Error(data.detail || 'Login failed');
+        window.addEventListener(AUTH_EVENT_KEY, handleAuthChange);
+        return () => {
+            window.removeEventListener(AUTH_EVENT_KEY, handleAuthChange);
+        };
+    }, [fetchUser]);
 
-            Cookies.set('token', data.access_token, { expires: 1 });
+    const login = async (email: string, password: string) => {
+        const res = await fetch(`${API_URL}/users/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Login failed');
+        Cookies.set('token', data.access_token, { expires: 1 });
 
-            await fetchUser();
+        window.dispatchEvent(new Event(AUTH_EVENT_KEY));
 
-            router.push('/dashboard');
-        } catch (error) {
-            throw error;
-        }
+        router.push('/dashboard');
     };
 
-    // --- เพิ่มฟังก์ชัน REGISTER ---
-    const register = async (username: string, email: string, password: string): Promise<void> => {
-        try {
-            const res = await fetch(`${API_URL}/users/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, email, password }),
-            });
-
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.detail || 'Registration failed');
-
-        } catch (error) {
-            throw error;
-        }
-    };
-
-    const updateProfile = async (payload: UserUpdatePayload) => {
-        const token = Cookies.get('token');
-        try {
-            const res = await fetch(`${API_URL}/users/me`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(payload)
-            });
-
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.detail || 'Failed to update profile');
-
-            // อัปเดตข้อมูลใน State ทันที
-            await fetchUser();
-        } catch (error) {
-            throw error;
-        }
-    };
-
-    // --- 2. ฟังก์ชันอัปโหลดรูปภาพ Avatar ---
-    const updateAvatar = async (file: File) => {
-        const token = Cookies.get('token');
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const res = await fetch(`${API_URL}/users/me/avatar`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
-                body: formData
-            });
-
-            if (!res.ok) throw new Error('Failed to upload avatar');
-
-            // อัปเดตข้อมูลใน State เพื่อให้รูปเปลี่ยนทันที
-            await fetchUser();
-        } catch (error) {
-            throw error;
-        }
+    const register = async (username: string, email: string, password: string) => {
+        const res = await fetch(`${API_URL}/users/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Registration failed');
     };
 
     const logout = () => {
         Cookies.remove('token');
         setUser(null);
+
+        window.dispatchEvent(new Event(AUTH_EVENT_KEY));
+
         router.push('/');
-        console.log("logout");
     };
 
-    return { user, loading, login, register, logout, refreshUser: fetchUser, updateProfile, updateAvatar };
+    const refreshUser = useCallback(async () => {
+        await fetchUser(); // โหลดของตัวเอง
+        window.dispatchEvent(new Event(AUTH_EVENT_KEY));
+    }, [fetchUser]);
+
+    const updateProfile = async (payload: UserUpdatePayload) => {
+        const token = Cookies.get('token');
+        const res = await fetch(`${API_URL}/users/me`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('Failed to update profile');
+
+        window.dispatchEvent(new Event(AUTH_EVENT_KEY));
+    };
+
+    const updateAvatar = async (file: File) => {
+        const token = Cookies.get('token');
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch(`${API_URL}/users/me/avatar`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+        });
+        if (!res.ok) throw new Error('Failed to upload avatar');
+
+        window.dispatchEvent(new Event(AUTH_EVENT_KEY));
+    };
+
+    const getUserTransactions = useCallback(async (limit: number = 10, skip: number = 0): Promise<Transaction[]> => {
+        try {
+            const token = Cookies.get('token');
+            if (!token) return [];
+
+            const res = await fetch(`${API_URL}/users/transactions?limit=${limit}&skip=${skip}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!res.ok) {
+                // กรณี Token หมดอายุหรือ Error อื่นๆ
+                if (res.status === 401) {
+                   // อาจจะสั่ง logout() หรือ handle ตามความเหมาะสม
+                }
+                return [];
+            }
+
+            const data = await res.json();
+            return data;
+        } catch (error) {
+            console.error("Error fetching transactions:", error);
+            return [];
+        }
+    }, []);
+
+    return {
+        user,
+        loading,
+        login,
+        register,
+        logout,
+        refreshUser,
+        updateProfile,
+        updateAvatar,
+        getUserTransactions
+    };
 };

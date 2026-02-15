@@ -130,7 +130,7 @@ const PanoramaSphere = ({
         <mesh
             onClick={handlePointerDown}
             scale={[-1, 1, 1]}
-            rotation={[0, -Math.PI / 2, 0]}
+            rotation={[0, (-Math.PI / 2)-5.8, 0]}
         >
             <sphereGeometry args={[500, 60, 40]} />
             <meshBasicMaterial map={displayTexture} side={THREE.BackSide} />

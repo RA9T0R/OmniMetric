@@ -50,40 +50,39 @@ export const useProjects = () => {
         if (!token) throw new Error("No token found");
 
         try {
-            const projectRes = await fetch(`${API_URL}/projects/`, {
+            // 1. เตรียม FormData
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('model_name', modelName);
+            formData.append('input_type', inputType);
+
+            files.forEach((file) => {
+                formData.append('files', file);
+            });
+
+            // 2. ยิง Request เดียวไปที่ Endpoint ใหม่
+            const res = await fetch(`${API_URL}/projects/create_bulk`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({
-                    title,
-                    model_name: modelName,
-                    input_type: inputType
-                })
+                body: formData
             });
 
-            if (!projectRes.ok) throw new Error("Failed to create project");
-            const projectData = await projectRes.json();
-            const projectId = projectData.project_id;
+            if (!res.ok) {
+                if (res.status === 402) {
+                    const errData = await res.json();
+                    throw new Error(errData.detail || "Insufficient Credits for this project");
+                }
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.detail || "Failed to create project");
+            }
 
-            const uploadPromises = files.map(file => {
-                const formData = new FormData();
-                formData.append('file', file);
+            // Success
+            await fetchProjects(); // รีโหลดลิสต์โปรเจกต์
 
-                return fetch(`${API_URL}/projects/${projectId}/images`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: formData
-                });
-            });
-
-            await Promise.all(uploadPromises);
-
-            fetchProjects();
-            return projectId;
+            const projectData = await res.json();
+            return projectData.project_id;
 
         } catch (error) {
             console.error("Error creating project:", error);
@@ -96,17 +95,24 @@ export const useProjects = () => {
         if (!token) throw new Error("No token found");
 
         try {
-            const uploadPromises = files.map(file => {
+            const uploadPromises = files.map(async (file) => {
                 const formData = new FormData();
                 formData.append('file', file);
 
-                return fetch(`${API_URL}/projects/${projectId}/images`, {
+                const res = await fetch(`${API_URL}/projects/${projectId}/images`, {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
+                    headers: { 'Authorization': `Bearer ${token}` },
                     body: formData
                 });
+
+                if (!res.ok) {
+                    if (res.status === 402) {
+                        const errData = await res.json();
+                        throw new Error(errData.detail || "Insufficient Credits");
+                    }
+                    throw new Error("Failed to upload image");
+                }
+                return res.json();
             });
 
             await Promise.all(uploadPromises);

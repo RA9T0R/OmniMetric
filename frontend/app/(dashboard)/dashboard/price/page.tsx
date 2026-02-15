@@ -3,17 +3,26 @@
 import React, { useState } from 'react';
 import PriceCard from '@/components/PriceCard';
 import { PRICING_TIERS } from '@/lib/constants';
+import { Loader2, CreditCard } from 'lucide-react';
+import { usePayment } from '@/hooks/usePayment';
 
 const PricePage = () => {
     const [selectedId, setSelectedId] = useState<string | null>(null);
-
+    const { createCheckoutSession, isLoading } = usePayment();
     const selectedTier = PRICING_TIERS.find(t => t.id === selectedId);
 
     const handleCardClick = (id: string) => {
+        if (isLoading) return;
         if (selectedId === id) {
             setSelectedId(null);
         } else {
             setSelectedId(id);
+        }
+    };
+
+    const handleCheckout = () => {
+        if (selectedId) {
+            createCheckoutSession(selectedId);
         }
     };
 
@@ -35,29 +44,43 @@ const PricePage = () => {
                             tier={tier}
                             isSelected={selectedId === tier.id}
                             onClick={() => handleCardClick(tier.id)}
-                            className="w-full"
+                            className={`w-full transition-opacity ${isLoading && selectedId !== tier.id ? 'opacity-50 pointer-events-none' : ''}`}
                         />
                     ))}
                 </div>
             </div>
 
-            {/* Sticky Bottom Bar - SIMPLIFIED */}
+            {/* Sticky Bottom Bar */}
             <div className="sticky bottom-0 left-0 right-0 p-4 md:p-6 backdrop-blur-md z-40 flex justify-center">
                  <button
-                    disabled={!selectedId}
+                    onClick={handleCheckout}
+                    disabled={!selectedId || isLoading}
                     className={`
-                        w-full xl:max-w-9/10 h-16 md:h-20 rounded-xl font-bold text-2xl md:text-4xl transition-all shadow-2xl flex items-center justify-center border-2
+                        cursor-pointer w-full xl:max-w-9/10 h-16 md:h-20 rounded-xl font-bold text-2xl md:text-4xl transition-all shadow-2xl flex items-center justify-center border-2 gap-3
                         ${selectedId 
-                            ? 'bg-power dark:bg-Dark_power border-power hover:scale-[1.01] text-black opacity-100' 
+                            ? 'bg-power dark:bg-Dark_power border-power hover:scale-[1.01] text-black opacity-100 shadow-power/20' 
                             : 'bg-BG_light dark:bg-Dark_BG_light border-transparent text-subtext dark:text-Dark_subtext cursor-not-allowed opacity-80'
                         }
                     `}
                 >
-                    {selectedId ? `Pay ฿${selectedTier?.price}` : "Choose Package"}
+                    {isLoading ? (
+                        <>
+                            <Loader2 className="animate-spin w-8 h-8 md:w-10 md:h-10" />
+                            <span>Processing...</span>
+                        </>
+                    ) : selectedId ? (
+                        <>
+                            <CreditCard className="w-6 h-6 md:w-9 md:h-9" />
+                            <span>Pay ฿{selectedTier?.price}</span>
+                        </>
+                    ) : (
+                        "Choose Package"
+                    )}
                 </button>
             </div>
 
         </div>
     );
 }
+
 export default PricePage;

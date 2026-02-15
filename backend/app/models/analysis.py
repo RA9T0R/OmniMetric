@@ -27,10 +27,10 @@ class DetectedObject(Base):
 
     image_id = Column(UUID(as_uuid=True), ForeignKey("images.image_id", ondelete="CASCADE"), nullable=False)
 
-    label = Column(String(100), nullable=False)  # ชื่อวัตถุ
-    confidence = Column(Float, nullable=True)  # ความมั่นใจ AI (0.0 - 1.0)
-    box_data = Column(JSON, nullable=True)  # เก็บ bounding box {x, y, w, h}
-    distance = Column(Float, nullable=True)  # ระยะห่าง
+    label = Column(String(100), nullable=False)
+    confidence = Column(Float, nullable=True)
+    box_data = Column(JSON, nullable=True)
+    distance = Column(Float, nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
