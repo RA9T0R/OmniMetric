@@ -2,13 +2,13 @@
 
 import React from 'react';
 import { Coins, Baby, Handshake, ChessKing, Flame,Star } from 'lucide-react';
-import { PricingTier } from '@/lib/constants'; // Import type from constants
+import { PricingTier } from '@/lib/constants';
 
 interface PriceCardProps {
     tier: PricingTier;
     isSelected: boolean;
     onClick: () => void;
-    className?: string; // Allow custom sizing from parent
+    className?: string;
 }
 
 const PriceCard = ({ tier, isSelected, onClick, className = "" }: PriceCardProps) => {
@@ -37,10 +37,8 @@ const PriceCard = ({ tier, isSelected, onClick, className = "" }: PriceCardProps
                 ${className}
             `}
         >
-            {/* Top Row: Icon/Name + Price Tag */}
+            {/* Top Row*/}
             <div className="flex items-start justify-between w-full">
-
-                {/* Name & Icon */}
                 <div className="flex items-center gap-2 text-subtext dark:text-Dark_subtext">
                     <div className={`${isSelected ? 'text-power' : 'text-zinc-400'}`}>
                         {getIcon()}
@@ -61,7 +59,7 @@ const PriceCard = ({ tier, isSelected, onClick, className = "" }: PriceCardProps
                 </div>
             </div>
 
-            {/* Bottom Row: Token Count */}
+            {/* Bottom Row*/}
             <div className="flex items-center gap-2">
                 <Coins size={30} className="text-power dark:text-Dark_power" />
                 <span className="text-4xl font-bold text-Text dark:text-Dark_Text tracking-tight">

@@ -24,12 +24,8 @@ const Navbar_landing = ({ onMenuClick, onLoginClick, onSignupClick }: NavbarProp
     }, []);
 
     return (
-
         <nav className="navbar-landing-fixed">
-
-            {/* Container handles the width and vertical borders */}
             <Container className="flex justify-between items-center h-20">
-
                 {/* 1. Left Section: Logo */}
                 <div className="flex items-center gap-3">
                     <button onClick={onMenuClick} className="p-2 -ml-2 rounded-lg hover:bg-white/10 md:hidden cursor-pointer text-Text dark:text-Dark_Text">

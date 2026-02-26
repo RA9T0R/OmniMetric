@@ -40,14 +40,6 @@ export const usePayment = () => {
             setError(errorMessage);
             alert(errorMessage);
         } finally {
-            // หมายเหตุ: กรณี redirect สำเร็จ หน้าเว็บจะเปลี่ยนไป loading อาจจะค้างเป็น true ซึ่งถูกต้องแล้ว
-            // แต่ถ้า error เราต้องปิด loading
-            // การใส่ setIsLoading(false) ไว้ใน finally อาจทำให้เกิดปัญหากรณี redirect ไปแล้วแต่ code ยังรันต่อ
-            // แต่สำหรับการใช้งานทั่วไป การใส่ไว้เพื่อ handle error case ถือว่าโอเคครับ
-            /* ถ้า Redirect สำเร็จ Browser จะโหลดหน้าใหม่ state จะหายไปเอง
-               แต่ถ้าอยาก safe ให้เช็คว่าถ้าไม่มี error ค่อยปิด loading ก็ได้
-            */
-             // setIsLoading(false); // ⚠️ เปิดบรรทัดนี้ถ้าอยากให้ปุ่มหายหมุนกรณี Error
         }
     };
 

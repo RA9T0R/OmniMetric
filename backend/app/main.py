@@ -22,26 +22,26 @@ async def lifespan(app: FastAPI):
             Base.metadata.create_all(bind=engine)
             ensure_bucket_public()
             db_connected = True
-            print("✅ Database Connected & Tables Created!")
+            print("Database Connected & Tables Created!")
             break
         except OperationalError:
-            print(f"⚠️ Database not ready yet... waiting (Attempt {i + 1}/10)")
+            print(f"Database not ready yet... waiting (Attempt {i + 1}/10)")
             time.sleep(2)
         except Exception as e:
-            print(f"🔥 Unexpected DB Error: {e}")
+            print(f"Unexpected DB Error: {e}")
             time.sleep(2)
 
     try:
         model_loader.load_models()
     except Exception as e:
-        print(f"❌ Failed to load AI Models: {e}")
+        print(f"Failed to load AI Models: {e}")
 
     if not db_connected:
-        print("❌ Could not connect to Database after retries. Exiting.")
+        print("Could not connect to Database after retries. Exiting.")
         raise RuntimeError("Database Connection Failed")
 
     yield
-    print("🛑 Shutting down OmniMetric...")
+    print("Shutting down")
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,

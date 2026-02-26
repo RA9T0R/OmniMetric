@@ -260,7 +260,6 @@ def process_image_background_task(image_id: UUID):
         # -------------------------------------------------------------
         # 2. YOLO & DEPTH PIPELINE
         # -------------------------------------------------------------
-
         orig_h, orig_w = original_img.shape[:2]
         project = db_image.project
         input_type = project.input_type

@@ -53,7 +53,7 @@ const SelectionPopup = ({ isOpen, onClose, onProcess, type, data }: SelectionPop
                     </div>
                 </div>
 
-                {/* 💰 Cost Warning Section */}
+                {/*Cost Warning Section */}
                 {is360 ? (
                     <div className="mb-6 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl flex items-start gap-3">
                         <Coins size={18} className="text-yellow-500 mt-0.5 shrink-0" />

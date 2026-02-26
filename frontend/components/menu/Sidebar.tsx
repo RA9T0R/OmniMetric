@@ -38,10 +38,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
                 ${isCollapsed ? 'w-20' : 'w-64'}
             `}
         >
-            {/* 1. HEADER FIX: Logic to handle spacing when collapsed */}
             <div className={`flex items-center h-20 px-4 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
-
-                {/* Only show Logo & Text if NOT collapsed */}
                 {!isCollapsed && (
                     <Link href="/dashboard" className="flex items-center gap-2 overflow-hidden">
                         <div className="flex size-10 items-center justify-center shrink-0 select-none">
@@ -57,7 +54,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
                     </Link>
                 )}
 
-                {/* Toggle Button */}
                 <button
                     onClick={() => setIsCollapsed(!isCollapsed)}
                     className=" hover:text-white transition-colors p-2 hover:bg-white/5 rounded-lg shrink-0 cursor-pointer"
@@ -66,7 +62,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
                 </button>
             </div>
 
-            {/* 2. NAVIGATION LINKS */}
             <nav className="flex-1 flex flex-col gap-2 px-4">
                 {sidebar_content.map((item) => {
                     const isActive = pathname === item.path;
@@ -92,7 +87,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
                                     {renderIcon(item.icon)}
                                 </span>
 
-                                {/* Hide Text when Collapsed */}
                                 {!isCollapsed && (
                                     <span className="font-medium whitespace-nowrap">
                                         {item.name}
@@ -104,7 +98,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
                 })}
             </nav>
 
-            {/* 3. LOGOUT (Bottom) */}
             <div className="p-2 border-t border-white/10">
                 <button 
                     className={`cursor-pointer flex items-center gap-4 px-3 py-3 w-full rounded-xl text-Text dark:text-Dark_Text hover:bg-red-500/10  transition-colors

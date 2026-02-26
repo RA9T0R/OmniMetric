@@ -8,6 +8,8 @@ import {
     Coins, AlertCircle, XCircle
 } from 'lucide-react';
 import { PRICING_CONFIG } from '@/lib/constants';
+import { useRouter } from 'next/navigation';
+
 import { useProjects } from '@/hooks/useProjects';
 import { useAuth } from "@/hooks/useAuth";
 
@@ -18,6 +20,7 @@ interface ProjectUploadModalProps {
     onSuccess?: () => void;
     projectId?: string;
     currentInputType?: string;
+    currentModel?: string;
 }
 
 type ModelKey = keyof typeof PRICING_CONFIG.models;
@@ -30,9 +33,10 @@ interface FileWithStatus {
     error?: string;
 }
 
-const ProjectUploadModal = ({ isOpen, onClose, mode, onSuccess, projectId, currentInputType }: ProjectUploadModalProps) => {
+const ProjectUploadModal = ({ isOpen, onClose, mode, onSuccess, projectId, currentInputType, currentModel }: ProjectUploadModalProps) => {
     const { createProjectWithImages, addImagesToProject } = useProjects();
     const { refreshUser } = useAuth();
+      const router = useRouter();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // 1. Form State
@@ -139,7 +143,7 @@ const ProjectUploadModal = ({ isOpen, onClose, mode, onSuccess, projectId, curre
             const newValidatedFiles = await Promise.all(newRawFiles.map(file => validateFile(file, selectedInput)));
             setFiles(prev => [...prev, ...newValidatedFiles]);
             if (files.length === 0 && mode === 'create') setShowBreakdown(true);
-            setErrorMessage(null); // Clear error on interaction
+            setErrorMessage(null);
         }
         if (e.target) e.target.value = '';
     };
@@ -147,9 +151,6 @@ const ProjectUploadModal = ({ isOpen, onClose, mode, onSuccess, projectId, curre
     const triggerFileSelect = () => { fileInputRef.current?.click(); };
     const removeFile = (id: string) => { setFiles(prev => prev.filter(f => f.id !== id)); };
 
-    // -------------------------------------------------------------
-    // 🚀 Logic Handle Confirm (with Error Handling)
-    // -------------------------------------------------------------
     const handleConfirm = async () => {
         setErrorMessage(null);
         setIsInsufficientCredit(false);
@@ -170,14 +171,13 @@ const ProjectUploadModal = ({ isOpen, onClose, mode, onSuccess, projectId, curre
             const filesToSend = files.map(f => f.file);
 
             if (mode === 'create') {
-                // ใช้ API Bulk Create ที่เราทำไว้
                 await createProjectWithImages(title, selectedModel, selectedInput, filesToSend);
             } else if (mode === 'add') {
                 if (!projectId) throw new Error("Project ID is missing");
                 await addImagesToProject(projectId, filesToSend);
+                router.push('/dashboard/projects');
             }
 
-            // Success: Refresh User Credit
             await refreshUser();
 
             setIsUploading(false);
@@ -193,7 +193,6 @@ const ProjectUploadModal = ({ isOpen, onClose, mode, onSuccess, projectId, curre
             console.error(error);
             setIsUploading(false);
 
-            // Handle Error Message
             const msg = error.message || "Failed to process request.";
             setErrorMessage(msg);
 
@@ -210,7 +209,7 @@ const ProjectUploadModal = ({ isOpen, onClose, mode, onSuccess, projectId, curre
             <div className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={handleCloseInternal} />
             <div className="relative z-10 flex flex-col-reverse xl:flex-row items-center xl:items-start justify-center gap-4 transition-all duration-300 ease-in-out w-full my-auto">
 
-                {/* 1. PRICE BREAKDOWN CARD (Create Mode Only) - เหมือนเดิมตามคำขอ */}
+                {/* 1. PRICE BREAKDOWN CARD*/}
                 {showBreakdown && mode === 'create' && (
                     <div className="w-full max-w-2xl xl:w-72 bg-Main_BG dark:bg-Dark_Main_BG backdrop-blur-xl border-2 border-BG_light dark:border-Dark_BG_light rounded-xl shadow-2xl p-4 animate-in slide-in-from-top-4 xl:slide-in-from-right-8 fade-in duration-300 shrink-0">
                         <div className="flex justify-between items-center mb-4 md:mb-5">
@@ -284,7 +283,7 @@ const ProjectUploadModal = ({ isOpen, onClose, mode, onSuccess, projectId, curre
                         </div>
                         {mode === 'add' && (
                             <p className="text-xs text-subtext dark:text-zinc-500">
-                                Settings Locked: {selectedModel}, {selectedInput}
+                                Settings Locked: {currentModel}, {currentInputType}
                             </p>
                         )}
                     </div>
@@ -322,15 +321,15 @@ const ProjectUploadModal = ({ isOpen, onClose, mode, onSuccess, projectId, curre
                                 <div className="flex flex-col">
                                     <span className="text-[10px] text-subtext uppercase">Input Type</span>
                                     <span className="text-sm font-bold text-Text dark:text-Dark_Text flex items-center gap-2">
-                                        {selectedInput === 'Normal' ? <ImageIcon size={16}/> : <Globe size={16}/>}
-                                        {selectedInput}
+                                        {currentInputType === 'Normal' ? <ImageIcon size={16}/> : <Globe size={16}/>}
+                                        {currentInputType}
                                     </span>
                                 </div>
                                 <div className="flex flex-col border-l border-black/10 dark:border-white/10 pl-4">
                                     <span className="text-[10px] text-subtext uppercase">Model</span>
                                     <span className="text-sm font-bold text-Text dark:text-Dark_Text flex items-center gap-2">
-                                        {selectedModel === 'ProTypeModel' ? <Crown size={16}/> : <Zap size={16}/>}
-                                        {selectedModel}
+                                        {currentModel === 'ProTypeModel' ? <Crown size={16}/> : <Zap size={16}/>}
+                                        {currentModel}
                                     </span>
                                 </div>
                             </div>
@@ -370,7 +369,6 @@ const ProjectUploadModal = ({ isOpen, onClose, mode, onSuccess, projectId, curre
                         )}
                     </div>
 
-                    {/* ✅ ERROR BANNER: สวยๆ แต่ไม่กระทบ Layout เดิม */}
                     {errorMessage && (
                         <div className="mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-3 animate-in fade-in slide-in-from-bottom-2">
                             <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={20} />

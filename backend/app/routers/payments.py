@@ -88,21 +88,21 @@ async def stripe_webhook(
         metadata = session.get('metadata', {})
         credits_to_add = int(metadata.get('credits', 0))
 
-        print(f"💰 Payment Success! User: {user_id}, Credits: {credits_to_add}, PaymentID: {payment_id}")
+        print(f"Payment Success! User: {user_id}, Credits: {credits_to_add}, PaymentID: {payment_id}")
 
         if not user_id or not credits_to_add:
-            print("⚠️ Missing user_id or credits info")
+            print("Missing user_id or credits info")
             return {"status": "ignored", "reason": "missing info"}
 
         try:
             existing_tx = db.query(Transaction).filter(Transaction.payment_id == payment_id).first()
             if existing_tx:
-                print(f"⚠️ Transaction {payment_id} already processed.")
+                print(f"Transaction {payment_id} already processed.")
                 return {"status": "ignored", "reason": "already processed"}
 
             user = db.query(User).filter(User.user_id == user_id).first()
             if not user:
-                print(f"⚠️ User {user_id} not found.")
+                print(f"User {user_id} not found.")
                 return {"status": "error", "reason": "user not found"}
 
             user.credit_balance += credits_to_add
@@ -116,11 +116,11 @@ async def stripe_webhook(
             db.add(new_tx)
 
             db.commit()
-            print(f"✅ Automatically added {credits_to_add} tokens to user {user.username}")
+            print(f"Automatically added {credits_to_add} tokens to user {user.username}")
 
         except Exception as e:
             db.rollback()
-            print(f"❌ Database Error during webhook: {e}")
+            print(f"Database Error during webhook: {e}")
             raise HTTPException(status_code=500, detail="Database error")
 
     return {"status": "success"}

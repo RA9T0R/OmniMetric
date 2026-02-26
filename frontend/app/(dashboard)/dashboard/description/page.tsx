@@ -39,7 +39,6 @@ const DescriptionPage = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
                 <div className="lg:col-span-2 flex flex-col gap-6 h-full">
-                    {/* A. Workflow */}
                     <section className="bg-Main_BG dark:bg-Dark_Main_BG border border-BG_light dark:border-Dark_BG_light p-4 md:p-6 rounded-3xl relative overflow-hidden shrink-0">
                         <div className="flex items-center gap-3 mb-6 relative z-10">
                             <div className="p-3 rounded-xl bg-blue-500/10 text-blue-500">
@@ -69,7 +68,6 @@ const DescriptionPage = () => {
                         </div>
                     </section>
 
-                    {/* B. Models Comparison */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 shrink-0">
                         <div className="p-6 rounded-3xl bg-Main_BG dark:bg-Dark_Main_BG border border-BG_light dark:border-Dark_BG_light hover:border-power dark:hover:border-Dark_power transition-colors group flex flex-col h-full">
                             <div className="flex justify-between items-start mb-4">
@@ -102,7 +100,6 @@ const DescriptionPage = () => {
                         </div>
                     </div>
 
-                    {/* C. Input Support & Info - ✅ ใช้ flex-1 เพื่อให้ส่วนนี้ยืดปิดท้ายเต็มพื้นที่ */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1">
                         <section className="bg-Main_BG dark:bg-Dark_Main_BG border border-BG_light dark:border-Dark_BG_light p-6 rounded-3xl h-full">
                             <div className="flex items-center gap-3 mb-4">
@@ -139,10 +136,7 @@ const DescriptionPage = () => {
                     </div>
                 </div>
 
-                {/* ================= RIGHT COLUMN (Financial Sidebar) ================= */}
-                {/* ✅ h-full: บังคับให้ขวาสูงเท่าซ้าย */}
                 <div className="flex flex-col gap-6 h-full lg:sticky lg:top-6">
-                    {/* 1. Wallet Card */}
                     <section className="bg-Main_BG dark:bg-Dark_Main_BG border border-BG_light dark:border-Dark_BG_light p-6 rounded-3xl flex flex-col items-center text-center relative overflow-hidden shrink-0 shadow-xl">
                         <div className="absolute top-0 w-full h-1 bg-linear-to-r from-transparent via-power to-transparent opacity-50"></div>
                         <div className="mb-4 p-3 rounded-full bg-BG_dark dark:bg-Dark_BG_dark">
@@ -167,8 +161,6 @@ const DescriptionPage = () => {
                         </Link>
                     </section>
 
-                    {/* 2. Transaction History */}
-                    {/* ✅ flex-1: ยืดเต็มพื้นที่ที่เหลือในคอลัมน์ขวา (จะเท่ากับความสูงรวมของฝั่งซ้ายพอดี) */}
                     <section className="bg-Main_BG dark:bg-Dark_Main_BG border border-BG_light dark:border-Dark_BG_light rounded-3xl flex-1 flex flex-col overflow-hidden shadow-lg h-full">
                         <div className="p-6 border-b border-BG_light dark:border-white/5 bg-BG_light/30 dark:bg-white/5 shrink-0">
                             <div className="flex items-center gap-3">
@@ -177,7 +169,6 @@ const DescriptionPage = () => {
                             </div>
                         </div>
 
-                        {/* ✅ flex-1 overflow-y-auto: พื้นที่ Scroll จะขยายจนสุด */}
                         <div className="flex-1 overflow-y-auto p-2 custom-scrollbar max-h-[300px]">
                             {loadingTx ? (
                                 <div className="flex justify-center py-10"><Loader2 className="animate-spin text-subtext"/></div>

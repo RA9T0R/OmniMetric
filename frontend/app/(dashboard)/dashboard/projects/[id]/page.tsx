@@ -37,7 +37,6 @@ const ProjectDetailPage = () => {
     const [manualPage, setManualPage] = useState(1);
     const [isPointerActive, setIsPointerActive] = useState(false);
 
-    // Popup States
     const [selectionData, setSelectionData] = useState<PixelSelectionData | null>(null);
     const [isPopupOpen, setIsPopupOpen] = useState(false);
 
@@ -47,17 +46,13 @@ const ProjectDetailPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isMeasuring, setIsMeasuring] = useState(false);
 
-    // ✅ New: State สำหรับ Filter Scene
     const [selectedScene, setSelectedScene] = useState<string | null>(null);
 
     // 3. Computed Values
-
-    // ✅ Step A: Filter รูปภาพก่อน (ตาม Scene ที่เลือก)
     const displayedImages = project?.images.filter(img =>
         selectedScene ? img.sceneLabel === selectedScene : true
     ) || [];
 
-    // ✅ Step B: คำนวณ Index ให้ปลอดภัย (กัน Error กรณีเปลี่ยน Filter แล้ว Index เกิน)
     const safeImageIndex = Math.min(currentImageIndex, Math.max(0, displayedImages.length - 1));
     const currentImage = displayedImages[safeImageIndex];
 
@@ -67,14 +62,11 @@ const ProjectDetailPage = () => {
         obj.label.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // Reset page & search & popups เมื่อเปลี่ยนรูป หรือ เปลี่ยน Filter
     useEffect(() => {
-        // Sync manualPage กับ safeIndex
         if (manualPage !== safeImageIndex + 1) {
             setManualPage(safeImageIndex + 1);
         }
 
-        // ถ้า Filter เปลี่ยน แล้ว Index ปัจจุบันมันเกินจำนวนรูปใหม่ ให้รีเซ็ตกลับไปรูปแรก
         if (currentImageIndex >= displayedImages.length && displayedImages.length > 0) {
             setCurrentImageIndex(0);
         }
@@ -86,11 +78,11 @@ const ProjectDetailPage = () => {
         setIsResultPopupOpen(false);
         setResultData(null);
 
-    }, [safeImageIndex, selectedScene, displayedImages.length]); // Dependencies updated
+    }, [safeImageIndex, selectedScene, displayedImages.length]);
 
     useEffect(() => {
         let interval: NodeJS.Timeout;
-        if (isPlaying && displayedImages.length > 0) { // ใช้ displayedImages แทน project.images
+        if (isPlaying && displayedImages.length > 0) {
             interval = setInterval(() => {
                 setCurrentImageIndex((prev) => (prev + 1) % displayedImages.length);
             }, 1000);
@@ -118,7 +110,6 @@ const ProjectDetailPage = () => {
         }
     };
 
-    // ปรับ Logic ปุ่ม Next/Prev ให้ใช้ displayedImages
     const handleNextImage = () => { if (displayedImages.length === 0) return; setCurrentImageIndex((prev) => (prev + 1) % displayedImages.length); };
     const handlePrevImage = () => { if (displayedImages.length === 0) return; setCurrentImageIndex((prev) => (prev === 0 ? displayedImages.length - 1 : prev - 1)); };
 
@@ -266,7 +257,6 @@ const ProjectDetailPage = () => {
                             </div>
                         )}
 
-                        {/* ✅ Popup 1: Confirm Selection */}
                         <SelectionPopup
                             isOpen={isPopupOpen}
                             onClose={() => setIsPopupOpen(false)}
@@ -275,7 +265,6 @@ const ProjectDetailPage = () => {
                             data={selectionData}
                         />
 
-                        {/* ✅ Popup 2: Result Display (NEW) */}
                         <MeasurementResultPopup
                             isOpen={isResultPopupOpen}
                             onClose={() => setIsResultPopupOpen(false)}
@@ -292,14 +281,8 @@ const ProjectDetailPage = () => {
 
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4 shrink-0">
 
-                        {/* LEFT GROUP: Search + Filter + Info */}
-                        {/* ✅ แก้ไข 1: ใช้ flex-1 min-w-0 เพื่อให้กินพื้นที่แค่ที่เหลือ ไม่ไปดัน Pagination */}
                         <div className="flex flex-col justify-between gap-2 flex-1 min-w-0 w-full md:w-auto">
-
-                            {/* Wrapper for Search + Scene Filter */}
                             <div className="flex flex-col xl:flex-row items-start xl:items-center gap-3">
-
-                                {/* 1. Search Box */}
                                 <div className="relative w-full lg:w-80 xl:w-96 shrink-0">
                                     <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-subtext dark:text-zinc-500" />
                                     <input
@@ -311,7 +294,6 @@ const ProjectDetailPage = () => {
                                     />
                                 </div>
 
-                                {/* 2. ✅ Scene Filter (Auxiliary Style) */}
                                 {projectScenes && projectScenes.length > 0 && (
                                     <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar min-w-0 max-w-full">
 
@@ -404,7 +386,7 @@ const ProjectDetailPage = () => {
                 </div>
             </div>
 
-            <ProjectUploadModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} mode="add" projectId={id} onSuccess={refreshProject} currentInputType={project.inputType} />
+            <ProjectUploadModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} mode="add" projectId={id} onSuccess={refreshProject} currentInputType={project.inputType} currentModel={project.modelType} />
         </div>
     );
 };

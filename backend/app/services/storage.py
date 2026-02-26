@@ -39,7 +39,7 @@ def ensure_bucket_public():
         )
 
     except Exception as e:
-        print(f"⚠️ Failed to set bucket policy: {e}")
+        print(f"Failed to set bucket policy: {e}")
 
 
 def upload_file(file, folder="avatars", user_id: str = None, project_id: str = None) -> str | None:

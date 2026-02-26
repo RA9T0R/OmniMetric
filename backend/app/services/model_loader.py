@@ -17,7 +17,7 @@ class ModelManager:
         if cls._instance is None:
             cls._instance = super(ModelManager, cls).__new__(cls)
             cls._instance.device = "cuda" if torch.cuda.is_available() else "cpu"
-            print(f"🖥️  AI Computing Device: {cls._instance.device}")
+            print(f"AI Computing Device: {cls._instance.device}")
 
             cls._instance.yolo = None
             cls._instance.depth_pro_model = None
@@ -30,7 +30,7 @@ class ModelManager:
         return cls._instance
 
     def load_models(self):
-        print("⏳ Loading AI Models from local checkpoints...")
+        print("Loading AI Models from local checkpoints...")
 
         base_path = "app/checkpoints"
 
@@ -38,20 +38,20 @@ class ModelManager:
         try:
             yolo_path = os.path.join(base_path, "yolo", "yolo11n.pt")
             if os.path.exists(yolo_path):
-                print(f"📂 Loading YOLO from: {yolo_path}")
+                print(f"Loading YOLO from: {yolo_path}")
                 self.yolo = YOLO(yolo_path)
-                print("✅ YOLOv11 (Nano) Loaded successfully.")
+                print("YOLOv11 (Nano) Loaded successfully.")
             else:
-                print(f"⚠️  File not found: {yolo_path}")
+                print(f"File not found: {yolo_path}")
                 self.yolo = YOLO("yolo11n.pt")
         except Exception as e:
-            print(f"❌ Failed to load YOLO: {e}")
+            print(f"Failed to load YOLO: {e}")
 
         # --- 2. Load Depth Pro ---
         try:
             dp_path = os.path.join(base_path, "depth_pro", "depth_pro.pt")
             if os.path.exists(dp_path):
-                print(f"   📂 Loading Depth Pro from: {dp_path}")
+                print(f"Loading Depth Pro from: {dp_path}")
                 sig = inspect.signature(depth_pro.create_model_and_transforms)
                 cfg = sig.parameters['config'].default
                 cfg.checkpoint_uri = dp_path
@@ -59,15 +59,15 @@ class ModelManager:
                     config=cfg, device=self.device
                 )
                 self.depth_pro_model.eval()
-                print("✅ Depth Pro Loaded successfully (Config Hacked).")
+                print("Depth Pro Loaded successfully (Config Hacked).")
             else:
-                print(f"⚠️  Depth Pro checkpoint not found at {dp_path}")
+                print(f"Depth Pro checkpoint not found at {dp_path}")
                 self.depth_pro_model, self.depth_pro_transform = depth_pro.create_model_and_transforms(
                     device=self.device
                 )
-                print("✅ Depth Pro Loaded (Default).")
+                print("Depth Pro Loaded (Default).")
         except Exception as e:
-            print(f"❌ Failed to load Depth Pro: {e}")
+            print(f"Failed to load Depth Pro: {e}")
 
         # --- 3. Load Depth Anything V2 ---
         try:
@@ -87,13 +87,13 @@ class ModelManager:
             else:
                 print(f"❌ Depth Anything weights not found at: {da_path}")
         except Exception as e:
-            print(f"❌ Failed to load Depth Anything V2: {e}")
+            print(f"Failed to load Depth Anything V2: {e}")
 
         # --- 4. Load Scene Recognition Model (PRELOAD HERE) ---
         try:
             self.get_scene_model()
         except Exception as e:
-            print(f"❌ Failed to load Scene Model: {e}")
+            print(f"Failed to load Scene Model: {e}")
 
     def get_yolo(self):
         return self.yolo
@@ -123,11 +123,11 @@ class ModelManager:
             os.makedirs("app/checkpoints", exist_ok=True)
 
             if not os.path.exists(weights_path):
-                print(f"   ⬇️ Downloading Places365 weights...")
+                print(f"Downloading Places365 weights...")
                 try:
                     urllib.request.urlretrieve(weights_url, weights_path)
                 except Exception as e:
-                    print(f"   ❌ Download failed: {e}")
+                    print(f"Download failed: {e}")
                     return None, None
 
             checkpoint = torch.load(weights_path, map_location=self.device)
@@ -138,9 +138,9 @@ class ModelManager:
             self.scene_model.eval()
 
             self._load_scene_labels()
-            print("   ✅ Scene Model Loaded (Manual Mode)!")
+            print("Scene Model Loaded (Manual Mode)!")
         except Exception as e:
-            print(f"   ❌ Failed to load Scene Model: {e}")
+            print(f"Failed to load Scene Model: {e}")
             return None, None
 
         return self.scene_model, self.scene_labels
@@ -164,7 +164,7 @@ class ModelManager:
             try:
                 urllib.request.urlretrieve(url, label_file)
             except Exception as e:
-                print(f"❌ Failed to download scene labels: {e}")
+                print(f"Failed to download scene labels: {e}")
                 return
 
         classes = list()
@@ -175,7 +175,7 @@ class ModelManager:
                     classes.append(line.strip().split(' ')[0][3:])
             self.scene_labels = classes
         except Exception as e:
-            print(f"❌ Failed to parse scene labels: {e}")
+            print(f"Failed to parse scene labels: {e}")
 
 
 model_loader = ModelManager()

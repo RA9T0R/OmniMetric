@@ -61,7 +61,6 @@ const ProjectsPage = () => {
                     ))}
                 </div>
             ) : (
-                // --- Empty State (ถ้ายังไม่มีโปรเจกต์) ---
                 <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl opacity-60">
                     <Layers size={48} className="mb-4 text-zinc-400" />
                     <h3 className="text-lg font-bold text-Text dark:text-Dark_Text">No projects found</h3>

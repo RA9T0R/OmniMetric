@@ -120,7 +120,6 @@ const SettingsPage = () => {
                 </div>
 
                 <div className="lg:col-span-8 ">
-                    {/* --- Avatar Section --- */}
                     <div className="mb-8">
                         <span className="text-xl font-bold text-Text dark:text-Dark_Text">Avatar</span>
                         <div className="flex items-center gap-6 mt-4">
@@ -131,7 +130,6 @@ const SettingsPage = () => {
                                 className="hidden"
                                 accept="image/*"
                             />
-                            {/* Avatar Circle */}
                             <div onClick={handleAvatarClick} className="group relative size-24 rounded-full border border-BG_light dark:border-Dark_BG_light flex items-center justify-center bg-gray-100 dark:bg-gray-800 cursor-pointer overflow-hidden transition-all hover:border-power">
                                 {previewUrl ? (
                                     <Image
@@ -167,7 +165,6 @@ const SettingsPage = () => {
                         </div>
                     </div>
 
-                    {/* --- Alert --- */}
                     {status.message && (
                         <div className={`p-3 rounded-lg flex items-center gap-2 text-sm mb-6 ${
                             status.type === 'success' 

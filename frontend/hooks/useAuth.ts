@@ -143,9 +143,8 @@ export const useAuth = () => {
             });
 
             if (!res.ok) {
-                // กรณี Token หมดอายุหรือ Error อื่นๆ
                 if (res.status === 401) {
-                   // อาจจะสั่ง logout() หรือ handle ตามความเหมาะสม
+                   logout()
                 }
                 return [];
             }
