@@ -85,5 +85,10 @@ docker-compose up -d
 * **Backend API Docs:** `http://localhost:8000/docs`
 * **MinIO Console:** `http://localhost:9001`
 
+![Multi Device](Docs/multi_device.jpg)
+![Home page](Docs/Dash_Home.png)
+![Project page](Docs/Dash_Project.png)
+![Detail page](Docs/Dash_Detail2.png)
+
 ## 📄 License
 This project is licensed under the MIT License - see the LICENSE file for details. Built as an academic AI Software Development project.
