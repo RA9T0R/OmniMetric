@@ -176,9 +176,7 @@ const SettingsPage = () => {
                         </div>
                     )}
 
-                    {/* --- Form --- */}
                     <form className="space-y-6" onSubmit={handleSave}>
-                        {/* Username */}
                         <div className="space-y-2">
                             <label className="text-subtext dark:text-Dark_subtext text-sm">Full name</label>
                             <div className="relative group">
@@ -195,7 +193,6 @@ const SettingsPage = () => {
                             </div>
                         </div>
 
-                        {/* Email */}
                         <div className="space-y-2">
                             <label className="text-subtext dark:text-Dark_subtext text-sm">Email</label>
                             <div className="relative group">
@@ -212,7 +209,6 @@ const SettingsPage = () => {
                             </div>
                         </div>
 
-                        {/* Old Password */}
                         <div className="space-y-2">
                             <label className="text-subtext dark:text-Dark_subtext text-sm">Old Password</label>
                             <div className="relative group">
@@ -230,7 +226,6 @@ const SettingsPage = () => {
                             </div>
                         </div>
 
-                        {/* New Password */}
                         <div className="space-y-2">
                             <label className="text-subtext dark:text-Dark_subtext text-sm">New Password</label>
                             <div className="relative group">

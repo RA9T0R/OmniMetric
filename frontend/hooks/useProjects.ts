@@ -60,7 +60,6 @@ export const useProjects = () => {
                 formData.append('files', file);
             });
 
-            // 2. ยิง Request เดียวไปที่ Endpoint ใหม่
             const res = await fetch(`${API_URL}/projects/create_bulk`, {
                 method: 'POST',
                 headers: {
@@ -78,8 +77,7 @@ export const useProjects = () => {
                 throw new Error(errorData.detail || "Failed to create project");
             }
 
-            // Success
-            await fetchProjects(); // รีโหลดลิสต์โปรเจกต์
+            await fetchProjects();
 
             const projectData = await res.json();
             return projectData.project_id;

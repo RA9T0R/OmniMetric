@@ -29,7 +29,6 @@ const PricePage = () => {
     return (
         <div className="w-full min-h-full flex flex-col relative">
 
-            {/* Scrollable Content Container */}
             <div className="w-full gap-6 xl:max-w-9/10 mx-auto pb-12 flex-1">
 
                 <div className="mb-8 px-2 md:px-0">
@@ -50,7 +49,6 @@ const PricePage = () => {
                 </div>
             </div>
 
-            {/* Sticky Bottom Bar */}
             <div className="sticky bottom-0 left-0 right-0 p-4 md:p-6 backdrop-blur-md z-40 flex justify-center">
                  <button
                     onClick={handleCheckout}

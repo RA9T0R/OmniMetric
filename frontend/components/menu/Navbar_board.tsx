@@ -43,7 +43,6 @@ const Navbar_board = ({ onMobileMenuClick }: NavbarBoardProps) => {
                     <Menu size={24} />
                 </button>
 
-                {/* User Dropdown */}
                 <div className="relative z-50">
                     <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="navbar-user-trigger">
                         <div className="size-8 rounded-full bg-zinc-700 flex items-center justify-center text-white font-bold text-xs border border-white/10 overflow-hidden">

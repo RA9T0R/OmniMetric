@@ -22,14 +22,12 @@ const SelectionPopup = ({ isOpen, onClose, onProcess, type, data }: SelectionPop
 
             <div className="bg-Main_BG dark:bg-Dark_Main_BG border border-white/10 p-6 rounded-2xl shadow-2xl max-w-sm w-full relative z-10 scale-100 animate-in zoom-in-95 duration-200">
 
-                {/* Close Button */}
                 <button
                     onClick={onClose}
                     className="absolute top-4 right-4 cursor-pointer p-1 md:p-2 hover:bg-white/10 rounded-full transition-colors text-Text dark:text-Dark_Text">
                     <CircleX size={20} />
                 </button>
 
-                {/* Header */}
                 <div className="flex items-center gap-3 mb-6">
                     <div className={`p-3 rounded-full ${is360 ? 'bg-yellow-500/10 text-yellow-500' : 'bg-power/10 text-power dark:bg-Dark_power/10 dark:text-Dark_power'}`}>
                         {is360 ? <Sparkles size={24} /> : <Crosshair size={24} />}
@@ -42,7 +40,6 @@ const SelectionPopup = ({ isOpen, onClose, onProcess, type, data }: SelectionPop
                     </div>
                 </div>
 
-                {/* Data Grid */}
                 <div className="grid grid-cols-2 gap-3 mb-4">
                     <div className="col-span-2 bg-BG_dark dark:bg-Dark_BG_dark p-3 rounded-xl border border-white/5 flex items-center justify-between">
                         <div className="flex items-center gap-2 text-subtext dark:text-Dark_subtext text-xs font-bold uppercase">
@@ -53,7 +50,6 @@ const SelectionPopup = ({ isOpen, onClose, onProcess, type, data }: SelectionPop
                     </div>
                 </div>
 
-                {/*Cost Warning Section */}
                 {is360 ? (
                     <div className="mb-6 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl flex items-start gap-3">
                         <Coins size={18} className="text-yellow-500 mt-0.5 shrink-0" />
@@ -74,7 +70,6 @@ const SelectionPopup = ({ isOpen, onClose, onProcess, type, data }: SelectionPop
                     </div>
                 )}
 
-                {/* Actions */}
                 <div className="flex gap-3">
                     <button
                         onClick={onClose}

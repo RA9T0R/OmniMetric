@@ -13,7 +13,7 @@
 
     /* BACKGROUNDS & NEUTRALS */
     --color-Main_BG: #F2F2F2;
-    /*--color-surface: #ef0000;    !* Cards / panels (Very Light Gray) *!*/
+    /*--color-surface: #ef0000; */
     --color-BG_light: #FFFFFF;
     --color-BG_dark: #E6E6E6;
     --color-subtext: #4D4D4D;
@@ -40,7 +40,6 @@
 }
 
 @layer components {
-  /* Create your custom variable class here */
   .input-primary {
     @apply w-full bg-BG_dark dark:bg-Dark_BG_dark border border-white/10 rounded-lg px-4 py-3 text-sm text-Text dark:text-Dark_Text placeholder:text-subtext dark:placeholder:text-Dark_subtext focus:outline-none focus:ring-2 focus:ring-power dark:focus:ring-Dark_power;
   }
@@ -59,9 +58,7 @@
   /* ------------------------------------------------ */
   /* SPECIFIC LINK STYLES                             */
   /* ------------------------------------------------ */
-
-  /* REMOVED 'group' from here */
-  .mobile-link-board {
+    .mobile-link-board {
     @apply flex items-center gap-4 px-3 py-3 rounded-xl transition-all duration-200 font-medium text-Text dark:text-Dark_Text;
   }
 

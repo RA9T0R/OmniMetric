@@ -32,7 +32,6 @@ const KeyFeatures = () => {
           {features.map((feature, index) => (
             <div key={index} className="flex gap-5 items-center group">
 
-              {/* Icon Box */}
               <div className="shrink-0 size-24 flex items-center justify-center rounded-2xl border-4 border-white/20 bg-transparent transition-colors">
                  {React.cloneElement(feature.icon as React.ReactElement<any>, {
                     className: "size-16 text-Text dark:text-Dark_Text transition-colors",
@@ -40,7 +39,6 @@ const KeyFeatures = () => {
                  })}
               </div>
 
-              {/* Text Content */}
               <div className="flex flex-col pt-1">
                 <h3 className="text-xl mb-2 text-Text dark:text-Dark_Text leading-none">
                     {feature.title}

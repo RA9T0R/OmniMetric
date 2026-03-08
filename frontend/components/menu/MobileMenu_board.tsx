@@ -34,13 +34,9 @@ const MobileMenu_board = ({ isOpen, setIsOpen }: MobileMenuProps) => {
     return (
         <div className={`mobile-menu-wrapper ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
 
-            {/* Backdrop */}
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsOpen(false)}/>
 
-            {/* Menu Panel */}
             <aside className={`mobile-menu-panel ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-
-                {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-BG_light dark:border-Dark_BG_light">
                     <Link href="/" className="flex items-center gap-2 overflow-hidden">
                         <div className="flex size-10 items-center justify-center shrink-0 select-none">
@@ -59,7 +55,6 @@ const MobileMenu_board = ({ isOpen, setIsOpen }: MobileMenuProps) => {
                     </button>
                 </div>
 
-                {/* Links */}
                 <nav className="flex-1 flex flex-col gap-2 p-4 overflow-y-auto">
                     {sidebar_content.map((item) => {
                          const isActive = pathname === item.path;
@@ -83,7 +78,6 @@ const MobileMenu_board = ({ isOpen, setIsOpen }: MobileMenuProps) => {
                     })}
                 </nav>
 
-                {/* Logout */}
                 <div className="p-4 border-t border-BG_light dark:border-Dark_BG_light pb-8">
                     <button onClick={logout} className="flex items-center gap-4 px-3 py-3 w-full rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-colors text-Text dark:text-Dark_Text">
                         <LogOut size={20} />

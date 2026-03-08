@@ -61,7 +61,7 @@ const ProjectUploadModal = ({ isOpen, onClose, mode, onSuccess, projectId, curre
     const totalCost = files.length * pricePerImage;
     const hasInvalidFiles = files.some(f => !f.isValid);
 
-    // Effect: Reset State on Open/Mode Change
+    // Effect: Open/Mode Change
     useEffect(() => {
         if (isOpen) {
             setErrorMessage(null);

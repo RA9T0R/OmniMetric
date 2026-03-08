@@ -37,7 +37,6 @@ const PriceCard = ({ tier, isSelected, onClick, className = "" }: PriceCardProps
                 ${className}
             `}
         >
-            {/* Top Row*/}
             <div className="flex items-start justify-between w-full">
                 <div className="flex items-center gap-2 text-subtext dark:text-Dark_subtext">
                     <div className={`${isSelected ? 'text-power' : 'text-zinc-400'}`}>
@@ -48,7 +47,6 @@ const PriceCard = ({ tier, isSelected, onClick, className = "" }: PriceCardProps
                     </span>
                 </div>
 
-                {/* Price Tag (White Box style from Figma) */}
                 <div className="flex flex-col items-end">
                     <div className="bg-white text-black font-bold px-3 py-1 rounded-lg text-xl mb-1">
                         ฿{tier.price}
@@ -59,7 +57,6 @@ const PriceCard = ({ tier, isSelected, onClick, className = "" }: PriceCardProps
                 </div>
             </div>
 
-            {/* Bottom Row*/}
             <div className="flex items-center gap-2">
                 <Coins size={30} className="text-power dark:text-Dark_power" />
                 <span className="text-4xl font-bold text-Text dark:text-Dark_Text tracking-tight">

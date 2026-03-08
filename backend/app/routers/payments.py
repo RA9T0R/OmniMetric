@@ -32,7 +32,7 @@ def create_checkout_session(
                 {
                     'price_data': {
                         'currency': 'thb',
-                        'unit_amount': package["price_satang"],  # ต้องเป็นหน่วยสตางค์
+                        'unit_amount': package["price_satang"],
                         'product_data': {
                             'name': package["name"],
                             'description': f"Get {package['tokens']} Tokens",

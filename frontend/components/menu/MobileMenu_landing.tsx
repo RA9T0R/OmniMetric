@@ -27,13 +27,9 @@ const MobileMenu_landing = ({ isOpen, setIsOpen, onLoginClick, onSignupClick }: 
     return (
         <div className={`mobile-menu-wrapper ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
 
-            {/* Backdrop */}
             <div className="absolute inset-0 bg-black/50" onClick={() => setIsOpen(false)}/>
 
-            {/* Menu Panel */}
             <aside className={`mobile-menu-panel ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-
-                {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-subtext/20 dark:border-Dark_subtext/20">
                     <div className="flex w-10 h-10 bg-bg dark:bg-Dark_bg rounded-lg items-center justify-center shrink-0 select-none">
                         {mounted && (theme === "dark"
@@ -52,7 +48,6 @@ const MobileMenu_landing = ({ isOpen, setIsOpen, onLoginClick, onSignupClick }: 
                     </button>
                 </div>
 
-                {/* Menu List */}
                 <div className="flex-1 flex flex-col p-4 gap-4 overflow-y-auto">
 
                     <Link href="#features" onClick={handleLinkClick} className="mobile-link-landing">
@@ -75,7 +70,6 @@ const MobileMenu_landing = ({ isOpen, setIsOpen, onLoginClick, onSignupClick }: 
                     >
                         Sign In
                     </button>
-
                 </div>
             </aside>
         </div>

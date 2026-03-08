@@ -118,7 +118,6 @@ const NormalImageViewer = ({
                                 boxShadow: '0 0 10px rgba(0,0,0,0.5)'
                             }}
                         >
-                            {/* Label Tag */}
                             <div className={`absolute -top-7 -left-0.5 text-white text-xs font-bold px-2 py-1 rounded-t-md flex items-center gap-2 ${borderColor.replace('border', 'bg')}`}>
                                 <span>{obj.label}</span>
                                 <span className="bg-black/20 px-1 rounded text-[10px]">{obj.confidence}%</span>

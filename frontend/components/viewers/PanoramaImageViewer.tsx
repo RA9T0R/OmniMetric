@@ -1,4 +1,3 @@
-// components/viewers/PanoramaImageViewer.tsx
 'use client';
 
 import React, { Suspense, useEffect, useMemo } from 'react';

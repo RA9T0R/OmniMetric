@@ -13,7 +13,6 @@ const HowItWorks = () => {
 
         <div className="flex flex-col md:flex-row items-center justify-between gap-8 max-w-7xl mx-auto relative">
 
-          {/* Step 1 */}
           <div className="flex flex-col items-center text-center gap-6 z-10">
             <div className="size-32 rounded-2xl border-2 border-dashed border-zinc-700 flex items-center justify-center bg-BG_light dark:bg-Dark_BG_light">
                 <Upload className="size-16 text-Text dark:text-Dark_Text" />
@@ -24,11 +23,9 @@ const HowItWorks = () => {
             </div>
           </div>
 
-          {/* Arrow */}
           <ArrowRight className="hidden md:block size-16 text-Text dark:text-Dark_Text" />
           <ArrowRight className="hidden md:block size-16 text-Text dark:text-Dark_Text" />
 
-          {/* Step 2 */}
           <div className="flex flex-col items-center text-center gap-6 z-10">
             <div className="size-32 rounded-2xl border border-zinc-700 flex items-center justify-center bg-BG_light dark:bg-Dark_BG_light">
                 <Terminal className="size-16 text-Text dark:text-Dark_Text" />
@@ -39,11 +36,9 @@ const HowItWorks = () => {
             </div>
           </div>
 
-          {/* Arrow */}
           <ArrowRight className="hidden md:block size-16 text-Text dark:text-Dark_Text" />
           <ArrowRight className="hidden md:block size-16 text-Text dark:text-Dark_Text" />
 
-          {/* Step 3 */}
           <div className="flex flex-col items-center text-center gap-6 z-10">
             <div className="size-32 rounded-2xl overflow-hidden border border-yellow-400 relative shadow-[0_0_15px_rgba(250,204,21,0.3)]">
                 <Image
@@ -58,7 +53,6 @@ const HowItWorks = () => {
                 <p className="text-sm text-subtext dark:text-Dark_subtext max-w-[150px]">Download depth map or 3D point cloud</p>
             </div>
           </div>
-
         </div>
       </Container>
     </section>

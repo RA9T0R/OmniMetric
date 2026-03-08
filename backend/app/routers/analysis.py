@@ -20,7 +20,6 @@ from app.config import settings
 
 router = APIRouter()
 
-
 class MeasurePointRequest(BaseModel):
     image_id: UUID
     x: int

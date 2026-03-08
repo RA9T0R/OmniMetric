@@ -1,10 +1,6 @@
 version: '3.8'
 
 services:
-  # ==============================
-  # 1. INFRASTRUCTURE (DB & S3)
-  # ==============================
-  
   # Database (PostgreSQL)
   db:
     image: postgres:15
@@ -24,18 +20,14 @@ services:
     image: quay.io/minio/minio
     container_name: omnimetric-minio
     ports:
-      - "9000:9000" # API
-      - "9001:9001" # Console
+      - "9000:9000"
+      - "9001:9001"
     environment:
       MINIO_ROOT_USER: admin
       MINIO_ROOT_PASSWORD: password123
     command: server /data --console-address ":9001"
     volumes:
       - ./minio_data:/data
-
-  # ==============================
-  # 2. APPLICATION SERVICES
-  # ==============================
 
   # The AI Backend (FastAPI)
   backend:
@@ -52,10 +44,8 @@ services:
     environment:
       - WATCHFILES_FORCE_POLLING=true
       - PYTHONUNBUFFERED=1
-      # Database Config (สังเกต: host คือ 'db' ไม่ใช่ 'localhost')
       - DATABASE_URL=postgresql://user:password@db:5432/omnimetric_db
       
-      # MinIO Config (สังเกต: endpoint คือ 'minio' ไม่ใช่ 'localhost')
       - AWS_ACCESS_KEY_ID=admin
       - AWS_SECRET_ACCESS_KEY=password123
       - AWS_REGION=us-east-1
@@ -74,7 +64,6 @@ services:
     depends_on:
       - backend
     environment:
-      # Browser เข้าหา API ต้องผ่าน localhost เพราะ browser รันในเครื่องคุณ ไม่ใช่ใน docker
       - NEXT_PUBLIC_API_URL=http://localhost:8000
       - PYTHONUNBUFFERED=1
       - WATCHPACK_POLLING=true

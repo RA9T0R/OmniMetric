@@ -48,14 +48,12 @@ export default function DashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Total Projects Card */}
                 <div className="dashboard-stat-card">
                     <div className="items-start w-full z-10">
                         <h3 className="text-subtext dark:text-Dark_subtext text-lg font-medium">Total Projects</h3>
                     </div>
                     <div className="flex items-end justify-between w-full z-10">
                         <span className="text-6xl font-bold text-Text dark:text-Dark_Text tracking-tight leading-none">
-                            {/* เช็ค Loading และแสดงผล */}
                             {projectsLoading ? (
                                 <Loader2 className="animate-spin w-10 h-10 opacity-50"/>
                             ) : (
@@ -66,7 +64,6 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                {/* Total Token Card */}
                 <div className="dashboard-stat-card">
                     <div className="items-start w-full z-10">
                         <h3 className="text-subtext dark:text-Dark_subtext text-lg font-medium">Total Token</h3>
@@ -86,7 +83,6 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
 
-                {/* 1. Recent Projects Section */}
                 <div className="xl:col-span-5 dashboard-panel-base p-4 flex flex-col">
                     <h3 className="text-xl font-bold text-Text dark:text-Dark_Text mb-6">Recent Projects</h3>
 
@@ -124,7 +120,6 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                {/* Center: Logo (Span 2) */}
                 <div className="xl:col-span-2 flex items-center justify-center py-8 xl:py-0">
                     <div className="relative size-60 opacity-20 hover:opacity-100 transition-opacity duration-500">
                         {theme === "dark"
@@ -134,12 +129,10 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                {/* Right: Type Price (Span 5) */}
                 <div className="xl:col-span-5 dashboard-panel-base p-4 flex flex-col">
                     <h3 className="text-xl font-bold text-Text dark:text-Dark_Text mb-6">Service Pricing</h3>
                     <div className="flex flex-col gap-4">
 
-                        {/* Models Price Group */}
                         <div className="dashboard-price-group-box">
                             <div className="flex items-center gap-2 mb-4 text-Text dark:text-Dark_Text">
                                 <Box size={24} strokeWidth={2} />
@@ -161,7 +154,6 @@ export default function DashboardPage() {
                             </div>
                         </div>
 
-                        {/* Image Type Price Group */}
                         <div className="dashboard-price-group-box">
                             <div className="flex items-center gap-2 mb-4 text-Text dark:text-Dark_Text">
                                 <ImageIcon size={24} strokeWidth={2} />

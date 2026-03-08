@@ -19,7 +19,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { PixelSelectionData } from '@/types/type';
 
 const ProjectDetailPage = () => {
-    // 1. เรียกใช้ Hook
+    // 1. Hook
     const params = useParams();
     const id = params.id as string;
     const router = useRouter();
@@ -197,9 +197,7 @@ const ProjectDetailPage = () => {
                 </div>
             </div>
 
-            {/* Main Grid */}
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-14 gap-6 min-h-0">
-                {/* LEFT: IMAGE VIEWER */}
                 <div className="lg:col-span-11 flex flex-col overflow-hidden gap-4">
                     <div className="relative rounded-xl border-2 border-BG_light dark:border-Dark_BG_light h-[500px] lg:h-auto lg:flex-1 overflow-hidden flex items-center justify-center bg-zinc-900">
                         {displayedImages.length > 0 && currentImage ? (
@@ -228,7 +226,6 @@ const ProjectDetailPage = () => {
                                     />
                                 )}
 
-                                {/* Controls Overlay */}
                                 <div className="absolute bottom-4 left-4 flex items-center gap-2 z-30">
                                     <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md p-1 rounded-xl border border-white/10">
                                         <button onClick={() => setViewMode('normal')} className={`cursor-pointer px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'normal' ? 'bg-white text-black' : 'text-white hover:bg-white/10'}`}>Normal</button>
@@ -239,9 +236,8 @@ const ProjectDetailPage = () => {
                                     </button>
                                 </div>
 
-                                {/* Scene Label Badge (Optional: เพื่อบอกว่ารูปนี้คืออะไร) */}
                                 {currentImage.sceneLabel && (
-                                    <div className="absolute top-4 left-4 z-30 animate-in fade-in zoom-in">
+                                    <div className="absolute top-4 left-4 z-10 animate-in fade-in zoom-in">
                                          <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 shadow-lg">
                                             <MapPin size={12} className="text-power" />
                                             <span className="text-xs font-bold text-white capitalize">{currentImage.sceneLabel}</span>
@@ -297,7 +293,6 @@ const ProjectDetailPage = () => {
                                 {projectScenes && projectScenes.length > 0 && (
                                     <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar min-w-0 max-w-full">
 
-                                        {/* Divider (Show only on Desktop) */}
                                         <div className="bg-black/10 dark:bg-white/10 mx-1 shrink-0 hidden xl:block"></div>
 
                                         <button
@@ -335,7 +330,6 @@ const ProjectDetailPage = () => {
                             </div>
                         </div>
 
-                        {/* Pagination (Fixed Right) */}
                         {displayedImages.length > 0 && (
                             <div className="w-full md:w-auto flex justify-center items-center gap-3 py-1 md:p-3 bg-Main_BG dark:bg-Dark_Main_BG rounded-xl border border-BG_light dark:border-Dark_BG_light h-fit shrink-0">
                                 <button onClick={() => setIsPlaying(!isPlaying)} className={`cursor-pointer size-10 rounded-xl flex items-center justify-center border transition-all ${isPlaying ? 'bg-power text-black border-power' : 'bg-BG_light dark:bg-black/20 border-BG_light dark:border-white/10 text-Text dark:text-Dark_Text'}`}>
@@ -354,7 +348,6 @@ const ProjectDetailPage = () => {
                     </div>
                 </div>
 
-                {/* RIGHT: OBJECT SIDEBAR (คงเดิม 100% ตามคำขอ) */}
                 <div className="lg:col-span-3 bg-Main_BG dark:bg-Dark_Main_BG rounded-xl border-2 border-BG_light dark:border-Dark_BG_light p-6 flex flex-col h-[500px] lg:h-full overflow-hidden">
                     <div className="flex items-center justify-between mb-6 shrink-0">
                         <div>

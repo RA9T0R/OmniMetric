@@ -6,14 +6,12 @@ export function middleware(request: NextRequest) {
 
     const { pathname } = request.nextUrl;
 
-    // 🔒 CASE 1: พยายามเข้า Dashboard (พื้นที่หวงห้าม)
     if (pathname.startsWith('/dashboard')) {
         if (!token) {
             return NextResponse.redirect(new URL('/', request.url));
         }
     }
 
-    // 🔄 CASE 2: มี Token แล้ว แต่พยายามเข้าหน้า Login หรือหน้าแรก (Optional)
     if (pathname === '/' && token) {
         return NextResponse.redirect(new URL('/dashboard', request.url));
     }

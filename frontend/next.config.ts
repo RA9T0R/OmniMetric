@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
                 protocol: 'http',
                 hostname: 'localhost',
                 port: '9000',
-                pathname: '/omnimetric-storage/**', // Scopes permissions to just this folder
+                pathname: '/omnimetric-storage/**',
             }
         ],
     },
